@@ -1,14 +1,42 @@
 """Synthetic Binance websocket event generator for testing."""
 
-import time
+from typing import TypedDict
+
+# Fixed timestamp for deterministic tests: 2024-01-01 00:00:00 UTC in milliseconds
+_DEFAULT_INITIAL_TIMESTAMP = 1704067200000
+
+
+class DepthUpdateEvent(TypedDict):
+    """Binance depth update websocket event structure."""
+
+    e: str  # Event type: "depthUpdate"
+    E: int  # Event timestamp (ms)
+    s: str  # Symbol
+    b: list[list[str]]  # Bids: [[price, qty], ...]
+    a: list[list[str]]  # Asks: [[price, qty], ...]
+
+
+class SnapshotResponse(TypedDict):
+    """Binance REST API snapshot response structure."""
+
+    lastUpdateId: int
+    bids: list[list[str]]  # [[price, qty], ...]
+    asks: list[list[str]]  # [[price, qty], ...]
 
 
 class BinanceEvents:
     """Generate synthetic Binance protocol events for testing."""
 
-    def __init__(self) -> None:
-        """Initialize event generator with auto-incrementing counters."""
-        self._timestamp_counter = int(time.time() * 1000)
+    def __init__(self, initial_timestamp: int | None = None) -> None:
+        """Initialize event generator with auto-incrementing counters.
+
+        Args:
+            initial_timestamp: Starting timestamp in milliseconds.
+                Defaults to 1704067200000 (2024-01-01 00:00:00 UTC).
+        """
+        if initial_timestamp is None:
+            initial_timestamp = _DEFAULT_INITIAL_TIMESTAMP
+        self._timestamp_counter = initial_timestamp
         self._update_id_counter = 1
 
     def depth_update(
@@ -17,7 +45,7 @@ class BinanceEvents:
         bids: list[tuple[str, str]],
         asks: list[tuple[str, str]],
         timestamp: int | None = None,
-    ) -> dict:
+    ) -> DepthUpdateEvent:
         """Generate a depth update event.
 
         Args:
@@ -47,7 +75,7 @@ class BinanceEvents:
         bids: list[tuple[str, str]],
         asks: list[tuple[str, str]],
         last_update_id: int | None = None,
-    ) -> dict:
+    ) -> SnapshotResponse:
         """Generate a snapshot response.
 
         Args:
@@ -75,7 +103,7 @@ class BinanceEvents:
         updates: list[dict],
         start_timestamp: int | None = None,
         timestamp_increment: int = 100,
-    ) -> list[dict]:
+    ) -> list[DepthUpdateEvent]:
         """Generate a sequence of depth update events.
 
         Args:

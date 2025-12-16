@@ -1,17 +1,9 @@
 """Protocol definitions for testing."""
 
-from datetime import datetime
-from typing import Protocol
+from typing import Protocol, runtime_checkable
 
 
-class Clock(Protocol):
-    """Protocol for time sources."""
-
-    def now(self) -> datetime:
-        """Return the current datetime."""
-        ...
-
-
+@runtime_checkable
 class Notifier(Protocol):
     """Protocol for notification systems."""
 

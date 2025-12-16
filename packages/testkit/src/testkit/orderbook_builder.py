@@ -1,5 +1,7 @@
 """Fluent builder for OrderBookSnapshot test data."""
 
+from __future__ import annotations
+
 from decimal import Decimal
 
 from domain_orderbook import OrderBookLevel, OrderBookSnapshot
@@ -15,7 +17,7 @@ class OrderBookBuilder:
         self._bids: tuple[OrderBookLevel, ...] = ()
         self._asks: tuple[OrderBookLevel, ...] = ()
 
-    def with_symbol(self, symbol: str) -> "OrderBookBuilder":
+    def with_symbol(self, symbol: str) -> OrderBookBuilder:
         """Set the symbol.
 
         Args:
@@ -27,7 +29,7 @@ class OrderBookBuilder:
         self._symbol = symbol
         return self
 
-    def with_timestamp(self, timestamp: float) -> "OrderBookBuilder":
+    def with_timestamp(self, timestamp: float) -> OrderBookBuilder:
         """Set the timestamp.
 
         Args:
@@ -39,7 +41,7 @@ class OrderBookBuilder:
         self._timestamp = timestamp
         return self
 
-    def with_bids(self, bids: list[tuple[str, str]]) -> "OrderBookBuilder":
+    def with_bids(self, bids: list[tuple[str, str]]) -> OrderBookBuilder:
         """Set the bid levels.
 
         Args:
@@ -54,7 +56,7 @@ class OrderBookBuilder:
         )
         return self
 
-    def with_asks(self, asks: list[tuple[str, str]]) -> "OrderBookBuilder":
+    def with_asks(self, asks: list[tuple[str, str]]) -> OrderBookBuilder:
         """Set the ask levels.
 
         Args:
@@ -71,7 +73,7 @@ class OrderBookBuilder:
 
     def with_levels(
         self, bids: list[tuple[str, str]], asks: list[tuple[str, str]]
-    ) -> "OrderBookBuilder":
+    ) -> OrderBookBuilder:
         """Set both bids and asks at once.
 
         Args:
@@ -85,7 +87,7 @@ class OrderBookBuilder:
         self.with_asks(asks)
         return self
 
-    def with_single_bid(self, price: str, qty: str) -> "OrderBookBuilder":
+    def with_single_bid(self, price: str, qty: str) -> OrderBookBuilder:
         """Set a single bid level.
 
         Args:
@@ -98,7 +100,7 @@ class OrderBookBuilder:
         self._bids = (OrderBookLevel(price=Decimal(price), qty=Decimal(qty)),)
         return self
 
-    def with_single_ask(self, price: str, qty: str) -> "OrderBookBuilder":
+    def with_single_ask(self, price: str, qty: str) -> OrderBookBuilder:
         """Set a single ask level.
 
         Args:
@@ -113,7 +115,7 @@ class OrderBookBuilder:
 
     def with_imbalance_ratio(
         self, ratio: float, total_volume: float = 10.0
-    ) -> "OrderBookBuilder":
+    ) -> OrderBookBuilder:
         """Configure bids and asks to achieve a target imbalance ratio.
 
         Creates a single bid and single ask level with volumes calculated to
@@ -155,7 +157,7 @@ class OrderBookBuilder:
         )
         return self
 
-    def with_balanced_book(self, volume_per_side: float = 5.0) -> "OrderBookBuilder":
+    def with_balanced_book(self, volume_per_side: float = 5.0) -> OrderBookBuilder:
         """Configure a balanced orderbook with ratio = 0.0.
 
         Args:
@@ -168,7 +170,7 @@ class OrderBookBuilder:
 
     def with_high_bid_imbalance(
         self, ratio: float = 0.6, total_volume: float = 10.0
-    ) -> "OrderBookBuilder":
+    ) -> OrderBookBuilder:
         """Configure a snapshot with high bid-side imbalance (ratio > 0).
 
         Convenience method for tests that need an imbalance above typical thresholds.
@@ -189,7 +191,7 @@ class OrderBookBuilder:
 
     def with_high_ask_imbalance(
         self, ratio: float = -0.6, total_volume: float = 10.0
-    ) -> "OrderBookBuilder":
+    ) -> OrderBookBuilder:
         """Configure a snapshot with high ask-side imbalance (ratio < 0).
 
         Convenience method for tests that need a negative imbalance.

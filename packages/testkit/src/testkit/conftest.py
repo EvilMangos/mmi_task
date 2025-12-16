@@ -1,4 +1,8 @@
-"""Shared pytest fixtures and constants for testkit tests."""
+"""Shared pytest fixtures and constants for use across the monorepo.
+
+These fixtures are automatically available to any test that imports from testkit
+or uses testkit as a dependency. See CLAUDE.md for usage examples.
+"""
 
 from datetime import datetime
 
