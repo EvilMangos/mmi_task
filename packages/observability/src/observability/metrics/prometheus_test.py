@@ -2,10 +2,10 @@
 
 from __future__ import annotations
 
-from observability.counter import Counter
-from observability.gauge import Gauge
-from observability.prometheus_exporter import format_prometheus
-from observability.registry import MetricsRegistry
+from observability.metrics.counter import Counter
+from observability.metrics.gauge import Gauge
+from observability.metrics.prometheus import format_prometheus
+from observability.metrics.registry import MetricsRegistry
 
 
 class TestFormatPrometheusBasic:

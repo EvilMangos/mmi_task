@@ -33,14 +33,10 @@ def _parse_decimal_value(
     try:
         result = Decimal(value)
     except InvalidOperation:
-        raise ParseError(
-            f"Invalid {field_name} value in {side}: '{value}' is not numeric"
-        )
+        raise ParseError(f"Invalid {field_name} value in {side}: '{value}' is not numeric")
 
     if result < 0:
-        raise ParseError(
-            f"Invalid {field_name} value in {side}: negative {field_name} not allowed"
-        )
+        raise ParseError(f"Invalid {field_name} value in {side}: negative {field_name} not allowed")
 
     return result
 
@@ -151,9 +147,7 @@ def parse_depth_message(
         data = message
 
         if symbol is None:
-            raise ParseError(
-                "Symbol must be provided for single-stream format messages"
-            )
+            raise ParseError("Symbol must be provided for single-stream format messages")
 
     # Validate required fields
     if "bids" not in data:

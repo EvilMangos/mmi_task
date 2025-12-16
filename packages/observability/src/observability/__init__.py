@@ -6,15 +6,19 @@ from observability.correlation import (
     reset_correlation_id,
     set_correlation_id,
 )
-from observability.counter import Counter
 from observability.debug import is_debug_enabled
 from observability.exception_formatter import format_exception
-from observability.gauge import Gauge
 from observability.json_formatter import JsonFormatter
 from observability.logger_factory import get_logger
-from observability.metrics_types import Labels, Metric, Sample
-from observability.prometheus_exporter import format_prometheus
-from observability.registry import MetricsRegistry
+from observability.metrics import (
+    Counter,
+    Gauge,
+    Labels,
+    Metric,
+    MetricsRegistry,
+    Sample,
+    format_prometheus,
+)
 from observability.timing import timed
 
 __all__ = [

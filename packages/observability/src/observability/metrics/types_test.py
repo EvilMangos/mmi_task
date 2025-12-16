@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from observability.metrics_types import Labels, Metric, Sample
+from observability.metrics.types import Labels, Metric, Sample
 
 
 class TestSample:

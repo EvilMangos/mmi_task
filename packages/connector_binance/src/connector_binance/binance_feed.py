@@ -62,9 +62,7 @@ class BinanceFeed:
         depth_level = self._determine_depth_level()
 
         # Build stream names: btcusdt@depth10, dotusdt@depth10, etc.
-        streams = [
-            f"{symbol.lower()}@depth{depth_level}" for symbol in self._settings.symbols
-        ]
+        streams = [f"{symbol.lower()}@depth{depth_level}" for symbol in self._settings.symbols]
 
         # Combined stream URL format: ws_url/stream?streams=stream1/stream2/...
         base_url = self._settings.ws_url.rstrip("/")

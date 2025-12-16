@@ -257,9 +257,7 @@ class TestSnapshotYielding:
         """R3: Multiple messages are yielded as snapshots."""
         feed = BinanceFeed(settings=binance_settings)
 
-        with mock_websockets_connect(
-            [sample_btcusdt_message, sample_dotusdt_message]
-        ) as (
+        with mock_websockets_connect([sample_btcusdt_message, sample_dotusdt_message]) as (
             mock_ws,
             mock_websockets,
         ):
@@ -417,9 +415,7 @@ class TestStopBehavior:
             assert mock_ws.close.call_count >= 1
 
     @pytest.mark.asyncio
-    async def test_stop_before_start_is_safe(
-        self, binance_settings: BinanceSettings
-    ) -> None:
+    async def test_stop_before_start_is_safe(self, binance_settings: BinanceSettings) -> None:
         """R6: stop() on never-started feed is safe."""
         feed = BinanceFeed(settings=binance_settings)
 
@@ -545,9 +541,7 @@ class TestMalformedMessageHandling:
         """R8: Invalid JSON logs warning and continues."""
         feed = BinanceFeed(settings=binance_settings)
 
-        with mock_websockets_connect(
-            [invalid_json_message, sample_btcusdt_message]
-        ) as (
+        with mock_websockets_connect([invalid_json_message, sample_btcusdt_message]) as (
             mock_ws,
             mock_websockets,
         ):

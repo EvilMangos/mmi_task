@@ -2,8 +2,8 @@
 
 from typing import Mapping
 
-from observability.base_metric import BaseMetric
-from observability.metrics_types import Labels
+from observability.metrics.base import BaseMetric
+from observability.metrics.types import Labels
 
 
 class Counter(BaseMetric):

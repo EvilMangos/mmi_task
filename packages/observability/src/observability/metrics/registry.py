@@ -1,6 +1,6 @@
 """Metrics registry for managing metric instances."""
 
-from observability.metrics_types import Metric, Sample
+from observability.metrics.types import Metric, Sample
 
 
 class MetricsRegistry:

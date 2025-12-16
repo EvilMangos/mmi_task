@@ -3,7 +3,7 @@
 import threading
 from abc import ABC
 
-from observability.metrics_types import Labels, Sample
+from observability.metrics.types import Labels, Sample
 
 
 class BaseMetric(ABC):

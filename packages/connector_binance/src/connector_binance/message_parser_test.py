@@ -166,9 +166,7 @@ class TestValidMessageParsing:
 class TestSymbolExtraction:
     """Tests for symbol extraction from stream names."""
 
-    def test_extracts_symbol_from_stream_name(
-        self, combined_stream_message: dict
-    ) -> None:
+    def test_extracts_symbol_from_stream_name(self, combined_stream_message: dict) -> None:
         """R3: Symbol extracted from btcusdt@depth10 -> BTCUSDT."""
         snapshot = parse_depth_message(message=combined_stream_message)
 
@@ -182,9 +180,7 @@ class TestSymbolExtraction:
 
         assert snapshot.symbol == "SOLUSDT"
 
-    def test_explicit_symbol_overrides_stream_name(
-        self, combined_stream_message: dict
-    ) -> None:
+    def test_explicit_symbol_overrides_stream_name(self, combined_stream_message: dict) -> None:
         """R3: Explicit symbol parameter takes precedence over stream name."""
         snapshot = parse_depth_message(
             message=combined_stream_message,
@@ -241,9 +237,7 @@ class TestDecimalConversion:
         assert snapshot.bids[0].qty == Decimal("1.5")
         assert isinstance(snapshot.bids[0].qty, Decimal)
 
-    def test_high_precision_decimals_preserved(
-        self, high_precision_message: dict
-    ) -> None:
+    def test_high_precision_decimals_preserved(self, high_precision_message: dict) -> None:
         """R4/R5: High precision decimal values are preserved exactly."""
         snapshot = parse_depth_message(message=high_precision_message)
 
@@ -291,9 +285,7 @@ class TestDecimalConversion:
 class TestOrderBookLevelCreation:
     """Tests for proper OrderBookLevel instance creation."""
 
-    def test_creates_correct_orderbooklevels(
-        self, combined_stream_message: dict
-    ) -> None:
+    def test_creates_correct_orderbooklevels(self, combined_stream_message: dict) -> None:
         """R6: Proper OrderBookLevel instances are created."""
         snapshot = parse_depth_message(message=combined_stream_message)
 
@@ -348,11 +340,7 @@ class TestEmptyArrays:
     def test_handles_both_empty(self, binance_message_builder) -> None:
         """R7: Both empty bids and asks handled."""
         message = (
-            binance_message_builder()
-            .with_symbol("BTCUSDT")
-            .with_bids([])
-            .with_asks([])
-            .build()
+            binance_message_builder().with_symbol("BTCUSDT").with_bids([]).with_asks([]).build()
         )
 
         snapshot = parse_depth_message(message=message)
@@ -369,9 +357,7 @@ class TestEmptyArrays:
 class TestMalformedJsonStructure:
     """Tests for error handling on malformed JSON."""
 
-    def test_raises_on_malformed_json_structure_missing_bids(
-        self, binance_message_builder
-    ) -> None:
+    def test_raises_on_malformed_json_structure_missing_bids(self, binance_message_builder) -> None:
         """R8: Missing bids key raises ParseError."""
         message = (
             binance_message_builder()
@@ -385,9 +371,7 @@ class TestMalformedJsonStructure:
 
         assert "bids" in str(exc_info.value).lower()
 
-    def test_raises_on_malformed_json_structure_missing_asks(
-        self, binance_message_builder
-    ) -> None:
+    def test_raises_on_malformed_json_structure_missing_asks(self, binance_message_builder) -> None:
         """R8: Missing asks key raises ParseError."""
         message = (
             binance_message_builder()
@@ -401,19 +385,14 @@ class TestMalformedJsonStructure:
 
         assert "asks" in str(exc_info.value).lower()
 
-    def test_raises_on_missing_data_in_combined_stream(
-        self, binance_message_builder
-    ) -> None:
+    def test_raises_on_missing_data_in_combined_stream(self, binance_message_builder) -> None:
         """R8: Missing data key in combined stream raises ParseError."""
         message = binance_message_builder().with_symbol("BTCUSDT").build_without_data()
 
         with pytest.raises(ParseError) as exc_info:
             parse_depth_message(message=message)
 
-        assert (
-            "data" in str(exc_info.value).lower()
-            or "structure" in str(exc_info.value).lower()
-        )
+        assert "data" in str(exc_info.value).lower() or "structure" in str(exc_info.value).lower()
 
     def test_raises_on_empty_message(self) -> None:
         """R8: Empty message raises ParseError."""
@@ -449,9 +428,7 @@ class TestInvalidPriceValues:
     using BinanceMessageBuilder, since the builder is designed to produce valid data.
     """
 
-    def test_raises_on_invalid_price_value_non_numeric(
-        self, binance_message_builder
-    ) -> None:
+    def test_raises_on_invalid_price_value_non_numeric(self, binance_message_builder) -> None:
         """R9: Non-numeric price raises ParseError."""
         # Intentionally invalid - builder cannot produce this
         message = (
@@ -481,10 +458,7 @@ class TestInvalidPriceValues:
         with pytest.raises(ParseError) as exc_info:
             parse_depth_message(message=message)
 
-        assert (
-            "price" in str(exc_info.value).lower()
-            or "negative" in str(exc_info.value).lower()
-        )
+        assert "price" in str(exc_info.value).lower() or "negative" in str(exc_info.value).lower()
 
     def test_raises_on_empty_price_string(self, binance_message_builder) -> None:
         """R9: Empty price string raises ParseError."""
@@ -513,9 +487,7 @@ class TestInvalidQuantityValues:
     with invalid data to test error handling.
     """
 
-    def test_raises_on_invalid_qty_value_non_numeric(
-        self, binance_message_builder
-    ) -> None:
+    def test_raises_on_invalid_qty_value_non_numeric(self, binance_message_builder) -> None:
         """R10: Non-numeric qty raises ParseError."""
         # Intentionally invalid - non-numeric quantity
         message = (
@@ -529,10 +501,7 @@ class TestInvalidQuantityValues:
         with pytest.raises(ParseError) as exc_info:
             parse_depth_message(message=message)
 
-        assert (
-            "qty" in str(exc_info.value).lower()
-            or "quantity" in str(exc_info.value).lower()
-        )
+        assert "qty" in str(exc_info.value).lower() or "quantity" in str(exc_info.value).lower()
 
     def test_raises_on_negative_qty(self, binance_message_builder) -> None:
         """R10: Negative qty raises ParseError."""
@@ -548,10 +517,7 @@ class TestInvalidQuantityValues:
         with pytest.raises(ParseError) as exc_info:
             parse_depth_message(message=message)
 
-        assert (
-            "qty" in str(exc_info.value).lower()
-            or "negative" in str(exc_info.value).lower()
-        )
+        assert "qty" in str(exc_info.value).lower() or "negative" in str(exc_info.value).lower()
 
     def test_raises_on_empty_qty_string(self, binance_message_builder) -> None:
         """R10: Empty qty string raises ParseError."""
@@ -583,9 +549,7 @@ class TestTimestampHandling:
         assert isinstance(snapshot.timestamp, float)
         assert snapshot.timestamp >= 0
 
-    def test_explicit_timestamp_used_when_provided(
-        self, combined_stream_message: dict
-    ) -> None:
+    def test_explicit_timestamp_used_when_provided(self, combined_stream_message: dict) -> None:
         """Explicit timestamp parameter is used."""
         snapshot = parse_depth_message(
             message=combined_stream_message,

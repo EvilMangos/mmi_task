@@ -4,9 +4,9 @@ from __future__ import annotations
 
 import pytest
 
-from observability.counter import Counter
-from observability.gauge import Gauge
-from observability.registry import MetricsRegistry
+from observability.metrics.counter import Counter
+from observability.metrics.gauge import Gauge
+from observability.metrics.registry import MetricsRegistry
 
 
 class TestMetricsRegistryBasic:

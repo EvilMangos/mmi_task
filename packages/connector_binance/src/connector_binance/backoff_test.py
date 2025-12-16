@@ -50,9 +50,7 @@ def small_max_backoff() -> ExponentialBackoff:
 class TestInitialDelay:
     """Tests for initial delay behavior."""
 
-    def test_initial_delay_equals_base_delay(
-        self, default_backoff: ExponentialBackoff
-    ) -> None:
+    def test_initial_delay_equals_base_delay(self, default_backoff: ExponentialBackoff) -> None:
         """R1: First call to next_delay() returns base_delay."""
         delay = default_backoff.next_delay()
 
@@ -124,9 +122,7 @@ class TestExponentialGrowth:
 class TestMaxDelayCap:
     """Tests for max_delay capping behavior."""
 
-    def test_delay_caps_at_max_delay(
-        self, small_max_backoff: ExponentialBackoff
-    ) -> None:
+    def test_delay_caps_at_max_delay(self, small_max_backoff: ExponentialBackoff) -> None:
         """R3: Delay never exceeds max_delay."""
         # Sequence: 1, 2, 4, 8 -> capped at 5
         delays = [small_max_backoff.next_delay() for _ in range(5)]
@@ -141,9 +137,7 @@ class TestMaxDelayCap:
 
         assert delay == 5.0
 
-    def test_subsequent_calls_remain_capped(
-        self, small_max_backoff: ExponentialBackoff
-    ) -> None:
+    def test_subsequent_calls_remain_capped(self, small_max_backoff: ExponentialBackoff) -> None:
         """R3: After hitting cap, all subsequent calls return max_delay."""
         # Get past the cap
         for _ in range(10):
@@ -163,9 +157,7 @@ class TestMaxDelayCap:
 class TestReset:
     """Tests for reset() functionality."""
 
-    def test_reset_returns_to_base_delay(
-        self, default_backoff: ExponentialBackoff
-    ) -> None:
+    def test_reset_returns_to_base_delay(self, default_backoff: ExponentialBackoff) -> None:
         """R4: After reset(), next_delay() returns base_delay again."""
         # Advance the backoff
         default_backoff.next_delay()  # 1
@@ -177,9 +169,7 @@ class TestReset:
 
         assert delay == 1.0
 
-    def test_reset_after_hitting_cap(
-        self, small_max_backoff: ExponentialBackoff
-    ) -> None:
+    def test_reset_after_hitting_cap(self, small_max_backoff: ExponentialBackoff) -> None:
         """R4: Reset works even after delay was capped."""
         # Hit the cap
         for _ in range(10):
@@ -190,9 +180,7 @@ class TestReset:
 
         assert delay == 1.0
 
-    def test_multiple_resets_are_idempotent(
-        self, default_backoff: ExponentialBackoff
-    ) -> None:
+    def test_multiple_resets_are_idempotent(self, default_backoff: ExponentialBackoff) -> None:
         """R4: Multiple consecutive resets are safe."""
         default_backoff.next_delay()
         default_backoff.next_delay()
@@ -205,9 +193,7 @@ class TestReset:
 
         assert delay == 1.0
 
-    def test_reset_on_fresh_instance_is_safe(
-        self, default_backoff: ExponentialBackoff
-    ) -> None:
+    def test_reset_on_fresh_instance_is_safe(self, default_backoff: ExponentialBackoff) -> None:
         """R4: Calling reset() on fresh instance does not break it."""
         default_backoff.reset()
         delay = default_backoff.next_delay()
