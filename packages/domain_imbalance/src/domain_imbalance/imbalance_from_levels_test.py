@@ -18,60 +18,51 @@ import pytest
 
 from domain_imbalance.imbalance_from_levels import imbalance_from_levels
 
-# Type alias for clarity in tests
-Level = tuple[float, float]  # (price, quantity)
+# Type alias for order book levels: (price, quantity)
+Level = tuple[float, float]
 
 
 class TestImbalanceFromLevelsEmptyInputs:
     """Test behavior with empty or missing level data."""
 
-    def test_empty_levels_returns_zero(self) -> None:
-        """R2, R7: When both bid and ask levels are empty, return 0.0."""
-        result = imbalance_from_levels(bids=[], asks=[])
-        assert result == pytest.approx(0.0)
-
-    def test_empty_bids_with_asks_returns_negative_one(self) -> None:
-        """R5, R7: When only asks exist, ratio should be -1.0."""
-        asks: list[Level] = [(100.0, 50.0)]
-        result = imbalance_from_levels(bids=[], asks=asks)
-        assert result == pytest.approx(-1.0)
-
-    def test_empty_asks_with_bids_returns_positive_one(self) -> None:
-        """R4, R7: When only bids exist, ratio should be 1.0."""
-        bids: list[Level] = [(99.0, 50.0)]
-        result = imbalance_from_levels(bids=bids, asks=[])
-        assert result == pytest.approx(1.0)
+    @pytest.mark.parametrize(
+        "bids,asks,expected",
+        [
+            pytest.param([], [], 0.0, id="R2_R7-empty_levels_returns_zero"),
+            pytest.param(
+                [], [(100.0, 50.0)], -1.0, id="R5_R7-empty_bids_returns_neg_one"
+            ),
+            pytest.param(
+                [(99.0, 50.0)], [], 1.0, id="R4_R7-empty_asks_returns_pos_one"
+            ),
+        ],
+    )
+    def test_empty_inputs(
+        self, bids: list[Level], asks: list[Level], expected: float
+    ) -> None:
+        """Verify behavior when bid or ask levels are empty."""
+        result = imbalance_from_levels(bids=bids, asks=asks)
+        assert result == pytest.approx(expected)
 
 
 class TestImbalanceFromLevelsSingleLevel:
     """Test with single price levels."""
 
-    def test_single_bid_level_no_asks(self) -> None:
-        """R4, R7: Single bid with no asks returns 1.0."""
-        bids: list[Level] = [(100.0, 25.0)]
-        result = imbalance_from_levels(bids=bids, asks=[])
-        assert result == pytest.approx(1.0)
-
-    def test_single_ask_level_no_bids(self) -> None:
-        """R5, R7: Single ask with no bids returns -1.0."""
-        asks: list[Level] = [(101.0, 25.0)]
-        result = imbalance_from_levels(bids=[], asks=asks)
-        assert result == pytest.approx(-1.0)
-
-    def test_single_level_each_equal_quantity(self) -> None:
-        """R6, R7: Equal quantities at single levels returns 0.0."""
-        bids: list[Level] = [(100.0, 50.0)]
-        asks: list[Level] = [(101.0, 50.0)]
+    @pytest.mark.parametrize(
+        "bids,asks,expected",
+        [
+            pytest.param([(100.0, 25.0)], [], 1.0, id="R4_R7-single_bid_no_asks"),
+            pytest.param([], [(101.0, 25.0)], -1.0, id="R5_R7-single_ask_no_bids"),
+            pytest.param([(100.0, 50.0)], [(101.0, 50.0)], 0.0, id="R6_R7-equal_qty"),
+            pytest.param([(100.0, 30.0)], [(101.0, 10.0)], 0.5, id="R1_R7-unequal_qty"),
+        ],
+    )
+    def test_single_level_cases(
+        self, bids: list[Level], asks: list[Level], expected: float
+    ) -> None:
+        """Verify imbalance calculation with single price levels."""
         result = imbalance_from_levels(bids=bids, asks=asks)
-        assert result == pytest.approx(0.0)
-
-    def test_single_level_each_unequal_quantity(self) -> None:
-        """R1, R7: Unequal quantities compute correct ratio."""
-        # bid=30, ask=10 -> (30-10)/(30+10) = 20/40 = 0.5
-        bids: list[Level] = [(100.0, 30.0)]
-        asks: list[Level] = [(101.0, 10.0)]
-        result = imbalance_from_levels(bids=bids, asks=asks)
-        assert result == pytest.approx(0.5)
+        assert result == pytest.approx(expected)
 
 
 class TestImbalanceFromLevelsMultipleLevels:

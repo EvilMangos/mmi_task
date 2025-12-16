@@ -20,25 +20,21 @@ from domain_imbalance.imbalance_ratio import imbalance_ratio
 class TestImbalanceRatioBasicCases:
     """Test basic expected behavior of imbalance_ratio."""
 
-    def test_equal_volumes_returns_zero(self) -> None:
-        """R6: When bid and ask volumes are equal, ratio should be 0.0."""
-        result = imbalance_ratio(bid_volume=100.0, ask_volume=100.0)
-        assert result == pytest.approx(0.0)
-
-    def test_all_bid_returns_positive_one(self) -> None:
-        """R4: When ask volume is 0 and bid volume is positive, ratio should be 1.0."""
-        result = imbalance_ratio(bid_volume=50.0, ask_volume=0.0)
-        assert result == pytest.approx(1.0)
-
-    def test_all_ask_returns_negative_one(self) -> None:
-        """R5: When bid volume is 0 and ask volume is positive, ratio should be -1.0."""
-        result = imbalance_ratio(bid_volume=0.0, ask_volume=50.0)
-        assert result == pytest.approx(-1.0)
-
-    def test_zero_volumes_returns_zero(self) -> None:
-        """R2: When both bid and ask volumes are 0, ratio should be 0.0 (avoid div by zero)."""
-        result = imbalance_ratio(bid_volume=0.0, ask_volume=0.0)
-        assert result == pytest.approx(0.0)
+    @pytest.mark.parametrize(
+        "bid_volume,ask_volume,expected",
+        [
+            pytest.param(100.0, 100.0, 0.0, id="R6-equal_volumes_returns_zero"),
+            pytest.param(50.0, 0.0, 1.0, id="R4-all_bid_returns_positive_one"),
+            pytest.param(0.0, 50.0, -1.0, id="R5-all_ask_returns_negative_one"),
+            pytest.param(0.0, 0.0, 0.0, id="R2-zero_volumes_returns_zero"),
+        ],
+    )
+    def test_basic_cases(
+        self, bid_volume: float, ask_volume: float, expected: float
+    ) -> None:
+        """Verify basic edge cases of imbalance_ratio."""
+        result = imbalance_ratio(bid_volume=bid_volume, ask_volume=ask_volume)
+        assert result == pytest.approx(expected)
 
 
 class TestImbalanceRatioFormula:
@@ -92,33 +88,25 @@ class TestImbalanceRatioBounds:
 class TestImbalanceRatioFloatPrecision:
     """Test behavior with small and large floating point values."""
 
-    def test_small_volumes(self) -> None:
-        """R1: Function should handle small floating point values correctly."""
-        # Very small volumes should still compute correctly
-        result = imbalance_ratio(bid_volume=0.0001, ask_volume=0.0003)
-        # (0.0001 - 0.0003) / (0.0001 + 0.0003) = -0.0002 / 0.0004 = -0.5
-        assert result == pytest.approx(-0.5)
-
-    def test_very_small_volumes_near_zero(self) -> None:
-        """R1: Function should handle very small volumes without precision issues."""
-        result = imbalance_ratio(bid_volume=1e-10, ask_volume=1e-10)
-        assert result == pytest.approx(0.0)
-
-    def test_large_volumes(self) -> None:
-        """R1: Function should handle large floating point values without overflow."""
-        # Large volumes typical in crypto markets (high-volume orderbooks)
-        result = imbalance_ratio(bid_volume=1e15, ask_volume=1e15)
-        assert result == pytest.approx(0.0)
-
-    def test_large_volumes_unequal(self) -> None:
-        """R1: Function should handle large unequal volumes correctly."""
-        # bid=3e15, ask=1e15 -> (3e15 - 1e15)/(3e15 + 1e15) = 2e15/4e15 = 0.5
-        result = imbalance_ratio(bid_volume=3e15, ask_volume=1e15)
-        assert result == pytest.approx(0.5)
+    @pytest.mark.parametrize(
+        "bid_volume,ask_volume,expected",
+        [
+            pytest.param(0.0001, 0.0003, -0.5, id="small_volumes"),
+            pytest.param(1e-10, 1e-10, 0.0, id="very_small_volumes_near_zero"),
+            pytest.param(1e15, 1e15, 0.0, id="large_equal_volumes"),
+            pytest.param(3e15, 1e15, 0.5, id="large_unequal_volumes"),
+        ],
+    )
+    def test_float_precision_cases(
+        self, bid_volume: float, ask_volume: float, expected: float
+    ) -> None:
+        """R1: Verify correct handling of various floating point magnitudes."""
+        result = imbalance_ratio(bid_volume=bid_volume, ask_volume=ask_volume)
+        assert result == pytest.approx(expected)
 
     def test_mixed_small_and_large_volumes(self) -> None:
         """R1: Function should handle mix of small and large values."""
-        # This tests numerical stability
+        # This tests numerical stability with additional assertion
         result = imbalance_ratio(bid_volume=1e10, ask_volume=1.0)
         # Should be very close to 1.0 but not exactly 1.0
         assert result == pytest.approx(1.0, rel=1e-9)
