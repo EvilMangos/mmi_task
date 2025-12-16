@@ -24,32 +24,13 @@ import pytest
 from aiohttp import ClientError
 from aioresponses import aioresponses
 
-from notifier_telegram.alert_payload import AlertPayload
 from notifier_telegram.exceptions import (
     PermanentNotifierError,
     TransientNotifierError,
 )
 from notifier_telegram.notifier_protocol import Notifier
 from notifier_telegram.telegram_notifier import TelegramNotifier
-
-
-def _make_payload(
-    symbol: str = "BTCUSDT",
-    ratio: float = 0.45,
-    bid_volume: float = 150000.0,
-    ask_volume: float = 85000.0,
-    timestamp: float = 1702800000.0,
-    threshold: float = 0.35,
-) -> AlertPayload:
-    """Helper to create AlertPayload with defaults."""
-    return AlertPayload(
-        symbol=symbol,
-        ratio=ratio,
-        bid_volume=bid_volume,
-        ask_volume=ask_volume,
-        timestamp=timestamp,
-        threshold=threshold,
-    )
+from notifier_telegram.testing import make_payload
 
 
 class TestTelegramNotifierConstruction:
@@ -215,7 +196,7 @@ class TestTelegramNotifierProtocolCompliance:
         )
 
         # Check it returns a coroutine when called
-        payload = _make_payload()
+        payload = make_payload()
         result = notifier.send_alert(payload)
         assert asyncio.iscoroutine(result)
         # Clean up the coroutine
@@ -232,7 +213,7 @@ class TestTelegramNotifierSendAlertSuccess:
             bot_token="123456:ABC-DEF",
             chat_id="-1001234567890",
         )
-        payload = _make_payload()
+        payload = make_payload()
 
         expected_url = "https://api.telegram.org/bot123456:ABC-DEF/sendMessage"
 
@@ -256,7 +237,7 @@ class TestTelegramNotifierSendAlertSuccess:
             bot_token="123456:ABC-DEF",
             chat_id="-1001234567890",
         )
-        payload = _make_payload()
+        payload = make_payload()
 
         expected_url = "https://api.telegram.org/bot123456:ABC-DEF/sendMessage"
 
@@ -285,7 +266,7 @@ class TestTelegramNotifierSendAlertSuccess:
             bot_token="123456:ABC-DEF",
             chat_id="-1001234567890",
         )
-        payload = _make_payload(symbol="ETHUSDT")
+        payload = make_payload(symbol="ETHUSDT")
 
         expected_url = "https://api.telegram.org/bot123456:ABC-DEF/sendMessage"
 
@@ -314,7 +295,7 @@ class TestTelegramNotifierSendAlertSuccess:
             bot_token="123456:ABC-DEF",
             chat_id="-1001234567890",
         )
-        payload = _make_payload()
+        payload = make_payload()
 
         expected_url = "https://api.telegram.org/bot123456:ABC-DEF/sendMessage"
 
@@ -330,7 +311,7 @@ class TestTelegramNotifierSendAlertSuccess:
             bot_token="123456:ABC-DEF",
             chat_id="-1001234567890",
         )
-        payload = _make_payload()
+        payload = make_payload()
 
         expected_url = "https://api.telegram.org/bot123456:ABC-DEF/sendMessage"
 
@@ -347,7 +328,7 @@ class TestTelegramNotifierSendAlertSuccess:
             chat_id="-1001234567890",
             base_url="https://custom.api.example.com",
         )
-        payload = _make_payload()
+        payload = make_payload()
 
         expected_url = "https://custom.api.example.com/bot123456:ABC-DEF/sendMessage"
 
@@ -370,7 +351,7 @@ class TestTelegramNotifierPermanentErrors:
             chat_id="-1001234567890",
             max_retries=0,
         )
-        payload = _make_payload()
+        payload = make_payload()
 
         expected_url = "https://api.telegram.org/bot123456:ABC-DEF/sendMessage"
 
@@ -389,7 +370,7 @@ class TestTelegramNotifierPermanentErrors:
             chat_id="-1001234567890",
             max_retries=0,
         )
-        payload = _make_payload()
+        payload = make_payload()
 
         expected_url = "https://api.telegram.org/botinvalid_token/sendMessage"
 
@@ -408,7 +389,7 @@ class TestTelegramNotifierPermanentErrors:
             chat_id="invalid_chat",
             max_retries=0,
         )
-        payload = _make_payload()
+        payload = make_payload()
 
         expected_url = "https://api.telegram.org/bot123456:ABC-DEF/sendMessage"
 
@@ -427,7 +408,7 @@ class TestTelegramNotifierPermanentErrors:
             chat_id="-1001234567890",
             max_retries=0,
         )
-        payload = _make_payload()
+        payload = make_payload()
 
         expected_url = "https://api.telegram.org/bot123456:ABC-DEF/sendMessage"
 
@@ -447,7 +428,7 @@ class TestTelegramNotifierPermanentErrors:
             max_retries=3,
             base_delay=0.0,
         )
-        payload = _make_payload()
+        payload = make_payload()
 
         expected_url = "https://api.telegram.org/bot123456:ABC-DEF/sendMessage"
 
@@ -474,7 +455,7 @@ class TestTelegramNotifierTransientErrors:
             max_retries=2,
             base_delay=0.0,
         )
-        payload = _make_payload()
+        payload = make_payload()
 
         expected_url = "https://api.telegram.org/bot123456:ABC-DEF/sendMessage"
 
@@ -496,7 +477,7 @@ class TestTelegramNotifierTransientErrors:
             chat_id="-1001234567890",
             max_retries=0,
         )
-        payload = _make_payload()
+        payload = make_payload()
 
         expected_url = "https://api.telegram.org/bot123456:ABC-DEF/sendMessage"
 
@@ -515,7 +496,7 @@ class TestTelegramNotifierTransientErrors:
             chat_id="-1001234567890",
             max_retries=0,
         )
-        payload = _make_payload()
+        payload = make_payload()
 
         expected_url = "https://api.telegram.org/bot123456:ABC-DEF/sendMessage"
 
@@ -534,7 +515,7 @@ class TestTelegramNotifierTransientErrors:
             chat_id="-1001234567890",
             max_retries=0,
         )
-        payload = _make_payload()
+        payload = make_payload()
 
         expected_url = "https://api.telegram.org/bot123456:ABC-DEF/sendMessage"
 
@@ -554,7 +535,7 @@ class TestTelegramNotifierTransientErrors:
             max_retries=2,
             base_delay=0.0,
         )
-        payload = _make_payload()
+        payload = make_payload()
 
         expected_url = "https://api.telegram.org/bot123456:ABC-DEF/sendMessage"
 
@@ -577,7 +558,7 @@ class TestTelegramNotifierTransientErrors:
             chat_id="-1001234567890",
             max_retries=0,
         )
-        payload = _make_payload()
+        payload = make_payload()
 
         expected_url = "https://api.telegram.org/bot123456:ABC-DEF/sendMessage"
 
@@ -595,7 +576,7 @@ class TestTelegramNotifierTransientErrors:
             max_retries=2,
             base_delay=0.0,
         )
-        payload = _make_payload()
+        payload = make_payload()
 
         expected_url = "https://api.telegram.org/bot123456:ABC-DEF/sendMessage"
 
@@ -618,7 +599,7 @@ class TestTelegramNotifierTransientErrors:
             chat_id="-1001234567890",
             max_retries=0,
         )
-        payload = _make_payload()
+        payload = make_payload()
 
         expected_url = "https://api.telegram.org/bot123456:ABC-DEF/sendMessage"
 
@@ -641,7 +622,7 @@ class TestTelegramNotifierRetryBackoff:
             max_retries=3,
             base_delay=0.1,
         )
-        payload = _make_payload()
+        payload = make_payload()
 
         expected_url = "https://api.telegram.org/bot123456:ABC-DEF/sendMessage"
 
@@ -676,7 +657,7 @@ class TestTelegramNotifierRetryBackoff:
             chat_id="-1001234567890",
             max_retries=0,
         )
-        payload = _make_payload()
+        payload = make_payload()
 
         expected_url = "https://api.telegram.org/bot123456:ABC-DEF/sendMessage"
 
@@ -707,7 +688,7 @@ class TestTelegramNotifierErrorMessages:
             chat_id="-1001234567890",
             max_retries=0,
         )
-        payload = _make_payload()
+        payload = make_payload()
 
         expected_url = "https://api.telegram.org/bot123456:ABC-DEF/sendMessage"
 
@@ -733,7 +714,7 @@ class TestTelegramNotifierErrorMessages:
             max_retries=2,
             base_delay=0.0,
         )
-        payload = _make_payload()
+        payload = make_payload()
 
         expected_url = "https://api.telegram.org/bot123456:ABC-DEF/sendMessage"
 
@@ -759,7 +740,7 @@ class TestTelegramNotifierEdgeCases:
             bot_token="123456:ABC-DEF",
             chat_id="-1001234567890",
         )
-        payload = _make_payload()
+        payload = make_payload()
 
         expected_url = "https://api.telegram.org/bot123456:ABC-DEF/sendMessage"
 
@@ -776,7 +757,7 @@ class TestTelegramNotifierEdgeCases:
             bot_token="123456:ABC-DEF",
             chat_id="-1001234567890",
         )
-        payload = _make_payload()
+        payload = make_payload()
 
         expected_url = "https://api.telegram.org/bot123456:ABC-DEF/sendMessage"
 
@@ -800,9 +781,9 @@ class TestTelegramNotifierEdgeCases:
             mocked.post(expected_url, status=200, payload={"ok": True})
             mocked.post(expected_url, status=200, payload={"ok": True})
 
-            await notifier.send_alert(_make_payload(symbol="BTCUSDT"))
-            await notifier.send_alert(_make_payload(symbol="ETHUSDT"))
-            await notifier.send_alert(_make_payload(symbol="SOLUSDT"))
+            await notifier.send_alert(make_payload(symbol="BTCUSDT"))
+            await notifier.send_alert(make_payload(symbol="ETHUSDT"))
+            await notifier.send_alert(make_payload(symbol="SOLUSDT"))
 
             assert len(list(mocked.requests.values())[0]) == 3
 
@@ -813,7 +794,7 @@ class TestTelegramNotifierEdgeCases:
             chat_id="-1001234567890",
         )
         # Some exchanges have unusual symbol formats
-        payload = _make_payload(symbol="1000SHIBUSDT")
+        payload = make_payload(symbol="1000SHIBUSDT")
 
         expected_url = "https://api.telegram.org/bot123456:ABC-DEF/sendMessage"
 

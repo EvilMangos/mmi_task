@@ -17,25 +17,7 @@ import pytest
 
 from notifier_telegram.alert_payload import AlertPayload
 from notifier_telegram.notifier_protocol import Notifier
-
-
-def _make_payload(
-    symbol: str = "BTCUSDT",
-    ratio: float = 0.45,
-    bid_volume: float = 150000.0,
-    ask_volume: float = 85000.0,
-    timestamp: float = 1702800000.0,
-    threshold: float = 0.35,
-) -> AlertPayload:
-    """Helper to create a test AlertPayload with defaults."""
-    return AlertPayload(
-        symbol=symbol,
-        ratio=ratio,
-        bid_volume=bid_volume,
-        ask_volume=ask_volume,
-        timestamp=timestamp,
-        threshold=threshold,
-    )
+from notifier_telegram.testing import make_payload
 
 
 class TestNotifierProtocolDefinition:
@@ -135,7 +117,7 @@ class TestNotifierProtocolUsage:
 
         # Use as Notifier type (duck typing)
         notifier: Notifier = RecordingNotifier()
-        payload = _make_payload()
+        payload = make_payload()
 
         await notifier.send_alert(payload)
 
@@ -154,7 +136,7 @@ class TestNotifierProtocolUsage:
             async def send_alert(self, alert: AlertPayload) -> None:
                 call_log.append("B")
 
-        payload = _make_payload()
+        payload = make_payload()
 
         # Both can be used as Notifier
         notifiers: list[Notifier] = [NotifierA(), NotifierB()]
@@ -183,7 +165,7 @@ class TestNotifierProtocolUsage:
 
         inner = InnerNotifier()
         wrapper = LoggingNotifierWrapper(inner)
-        payload = _make_payload(symbol="ETHUSDT")
+        payload = make_payload(symbol="ETHUSDT")
 
         await wrapper.send_alert(payload)
 
@@ -203,7 +185,7 @@ class TestNotifierProtocolAsync:
                 pass
 
         notifier = AsyncNotifier()
-        payload = _make_payload()
+        payload = make_payload()
 
         result = notifier.send_alert(payload)
 
@@ -224,7 +206,7 @@ class TestNotifierProtocolAsync:
                 call_times.append(time.time())
 
         notifier = SlowNotifier()
-        payloads = [_make_payload(symbol=f"SYM{i}") for i in range(3)]
+        payloads = [make_payload(symbol=f"SYM{i}") for i in range(3)]
 
         # Gather all calls
         await asyncio.gather(*[notifier.send_alert(p) for p in payloads])

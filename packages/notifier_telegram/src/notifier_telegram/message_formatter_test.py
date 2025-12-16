@@ -14,27 +14,8 @@ Requirements covered:
 - R8: Output is consistent and deterministic
 """
 
-from notifier_telegram.alert_payload import AlertPayload
 from notifier_telegram.message_formatter import format_alert_message
-
-
-def _make_payload(
-    symbol: str = "BTCUSDT",
-    ratio: float = 0.45,
-    bid_volume: float = 150000.0,
-    ask_volume: float = 85000.0,
-    timestamp: float = 1702800000.0,
-    threshold: float = 0.35,
-) -> AlertPayload:
-    """Helper to create AlertPayload with defaults."""
-    return AlertPayload(
-        symbol=symbol,
-        ratio=ratio,
-        bid_volume=bid_volume,
-        ask_volume=ask_volume,
-        timestamp=timestamp,
-        threshold=threshold,
-    )
+from notifier_telegram.testing import make_payload
 
 
 class TestFormatAlertMessageBasic:
@@ -42,7 +23,7 @@ class TestFormatAlertMessageBasic:
 
     def test_returns_non_empty_string(self) -> None:
         """R1: format_alert_message returns a non-empty string."""
-        payload = _make_payload()
+        payload = make_payload()
         result = format_alert_message(payload)
 
         assert isinstance(result, str)
@@ -50,14 +31,14 @@ class TestFormatAlertMessageBasic:
 
     def test_contains_symbol(self) -> None:
         """R2: Formatted message contains the symbol."""
-        payload = _make_payload(symbol="BTCUSDT")
+        payload = make_payload(symbol="BTCUSDT")
         result = format_alert_message(payload)
 
         assert "BTCUSDT" in result
 
     def test_contains_different_symbol(self) -> None:
         """R2: Formatted message contains the correct symbol for different inputs."""
-        payload = _make_payload(symbol="ETHUSDT")
+        payload = make_payload(symbol="ETHUSDT")
         result = format_alert_message(payload)
 
         assert "ETHUSDT" in result
@@ -65,7 +46,7 @@ class TestFormatAlertMessageBasic:
 
     def test_contains_ratio_value(self) -> None:
         """R3: Formatted message contains the imbalance ratio."""
-        payload = _make_payload(ratio=0.45)
+        payload = make_payload(ratio=0.45)
         result = format_alert_message(payload)
 
         # Should contain the ratio in recognizable format
@@ -77,7 +58,7 @@ class TestFormatAlertMessageBasic:
 
     def test_contains_bid_volume(self) -> None:
         """R4: Formatted message contains bid volume information."""
-        payload = _make_payload(bid_volume=150000.0)
+        payload = make_payload(bid_volume=150000.0)
         result = format_alert_message(payload)
 
         # Should contain some representation of the bid volume
@@ -85,7 +66,7 @@ class TestFormatAlertMessageBasic:
 
     def test_contains_ask_volume(self) -> None:
         """R4: Formatted message contains ask volume information."""
-        payload = _make_payload(ask_volume=85000.0)
+        payload = make_payload(ask_volume=85000.0)
         result = format_alert_message(payload)
 
         # Should contain some representation of the ask volume
@@ -93,7 +74,7 @@ class TestFormatAlertMessageBasic:
 
     def test_contains_threshold(self) -> None:
         """R5: Formatted message contains the threshold value."""
-        payload = _make_payload(threshold=0.35)
+        payload = make_payload(threshold=0.35)
         result = format_alert_message(payload)
 
         # Should contain the threshold value
@@ -105,7 +86,7 @@ class TestFormatAlertMessageBasic:
     def test_contains_timestamp(self) -> None:
         """R?: Formatted message contains timestamp representation."""
         # Use a specific timestamp: 2023-12-17 08:00:00 UTC
-        payload = _make_payload(timestamp=1702800000.0)
+        payload = make_payload(timestamp=1702800000.0)
         result = format_alert_message(payload)
 
         # Should contain some representation of the time
@@ -126,7 +107,7 @@ class TestFormatAlertMessageRatioHandling:
 
     def test_positive_ratio_formatting(self) -> None:
         """R6: Positive ratio is formatted appropriately (bid dominant)."""
-        payload = _make_payload(ratio=0.65, bid_volume=165000.0, ask_volume=35000.0)
+        payload = make_payload(ratio=0.65, bid_volume=165000.0, ask_volume=35000.0)
         result = format_alert_message(payload)
 
         # Should contain the ratio value
@@ -134,7 +115,7 @@ class TestFormatAlertMessageRatioHandling:
 
     def test_negative_ratio_formatting(self) -> None:
         """R6: Negative ratio is formatted appropriately (ask dominant)."""
-        payload = _make_payload(ratio=-0.55, bid_volume=45000.0, ask_volume=155000.0)
+        payload = make_payload(ratio=-0.55, bid_volume=45000.0, ask_volume=155000.0)
         result = format_alert_message(payload)
 
         # Should contain the negative ratio value (with or without sign displayed)
@@ -142,7 +123,7 @@ class TestFormatAlertMessageRatioHandling:
 
     def test_zero_ratio_formatting(self) -> None:
         """R7: Zero ratio is handled correctly."""
-        payload = _make_payload(ratio=0.0, bid_volume=100000.0, ask_volume=100000.0)
+        payload = make_payload(ratio=0.0, bid_volume=100000.0, ask_volume=100000.0)
         result = format_alert_message(payload)
 
         # Zero ratio should produce valid output - verify message structure
@@ -151,7 +132,7 @@ class TestFormatAlertMessageRatioHandling:
 
     def test_maximum_positive_ratio_formatting(self) -> None:
         """R7: Maximum ratio (+1.0) is handled correctly."""
-        payload = _make_payload(ratio=1.0, bid_volume=100000.0, ask_volume=0.0)
+        payload = make_payload(ratio=1.0, bid_volume=100000.0, ask_volume=0.0)
         result = format_alert_message(payload)
 
         # Should contain ratio of 1.0 or 100%
@@ -159,7 +140,7 @@ class TestFormatAlertMessageRatioHandling:
 
     def test_maximum_negative_ratio_formatting(self) -> None:
         """R7: Maximum negative ratio (-1.0) is handled correctly."""
-        payload = _make_payload(ratio=-1.0, bid_volume=0.0, ask_volume=100000.0)
+        payload = make_payload(ratio=-1.0, bid_volume=0.0, ask_volume=100000.0)
         result = format_alert_message(payload)
 
         # Should contain ratio of -1.0 or handle negative extreme
@@ -167,7 +148,7 @@ class TestFormatAlertMessageRatioHandling:
 
     def test_small_positive_ratio_formatting(self) -> None:
         """R3: Small positive ratio is visible in output."""
-        payload = _make_payload(ratio=0.01)
+        payload = make_payload(ratio=0.01)
         result = format_alert_message(payload)
 
         # Should contain the small ratio value precisely
@@ -179,7 +160,7 @@ class TestFormatAlertMessageVolumeHandling:
 
     def test_zero_volumes_formatting(self) -> None:
         """R7: Zero volumes are handled correctly."""
-        payload = _make_payload(ratio=0.0, bid_volume=0.0, ask_volume=0.0)
+        payload = make_payload(ratio=0.0, bid_volume=0.0, ask_volume=0.0)
         result = format_alert_message(payload)
 
         # Should not crash and should produce valid output
@@ -188,7 +169,7 @@ class TestFormatAlertMessageVolumeHandling:
 
     def test_large_volumes_formatting(self) -> None:
         """R7: Large volumes are handled correctly."""
-        payload = _make_payload(
+        payload = make_payload(
             ratio=0.5,
             bid_volume=1_000_000_000.0,
             ask_volume=333_333_333.33,
@@ -201,7 +182,7 @@ class TestFormatAlertMessageVolumeHandling:
 
     def test_small_volumes_formatting(self) -> None:
         """R7: Small volumes are handled correctly."""
-        payload = _make_payload(
+        payload = make_payload(
             ratio=0.5,
             bid_volume=0.001,
             ask_volume=0.0003,
@@ -214,7 +195,7 @@ class TestFormatAlertMessageVolumeHandling:
 
     def test_asymmetric_volumes_shows_both(self) -> None:
         """R4: Both bid and ask volumes appear in output even when very different."""
-        payload = _make_payload(
+        payload = make_payload(
             ratio=0.99,
             bid_volume=1000000.0,
             ask_volume=5000.0,
@@ -232,7 +213,7 @@ class TestFormatAlertMessageConsistency:
 
     def test_same_input_produces_same_output(self) -> None:
         """R8: Same AlertPayload always produces identical output."""
-        payload = _make_payload(
+        payload = make_payload(
             symbol="SOLUSDT",
             ratio=0.42,
             bid_volume=71000.0,
@@ -248,8 +229,8 @@ class TestFormatAlertMessageConsistency:
 
     def test_different_symbols_produce_different_output(self) -> None:
         """R8: Different symbols produce different output."""
-        payload1 = _make_payload(symbol="BTCUSDT")
-        payload2 = _make_payload(symbol="ETHUSDT")
+        payload1 = make_payload(symbol="BTCUSDT")
+        payload2 = make_payload(symbol="ETHUSDT")
 
         result1 = format_alert_message(payload1)
         result2 = format_alert_message(payload2)
@@ -258,8 +239,8 @@ class TestFormatAlertMessageConsistency:
 
     def test_different_ratios_produce_different_output(self) -> None:
         """R8: Different ratios produce different output."""
-        payload1 = _make_payload(ratio=0.45)
-        payload2 = _make_payload(ratio=0.75)
+        payload1 = make_payload(ratio=0.45)
+        payload2 = make_payload(ratio=0.75)
 
         result1 = format_alert_message(payload1)
         result2 = format_alert_message(payload2)
@@ -272,14 +253,14 @@ class TestFormatAlertMessageEdgeCases:
 
     def test_symbol_with_numbers(self) -> None:
         """Symbol containing numbers is handled correctly."""
-        payload = _make_payload(symbol="1000SHIBUSDT")
+        payload = make_payload(symbol="1000SHIBUSDT")
         result = format_alert_message(payload)
 
         assert "1000SHIBUSDT" in result
 
     def test_very_precise_ratio(self) -> None:
         """Ratio with many decimal places is handled (may be truncated)."""
-        payload = _make_payload(ratio=0.123456789)
+        payload = make_payload(ratio=0.123456789)
         result = format_alert_message(payload)
 
         # Should contain at least the first few significant digits of the ratio
@@ -287,7 +268,7 @@ class TestFormatAlertMessageEdgeCases:
 
     def test_very_precise_volumes(self) -> None:
         """Volumes with many decimal places are handled."""
-        payload = _make_payload(
+        payload = make_payload(
             bid_volume=123456.789012345,
             ask_volume=98765.432109876,
         )
@@ -299,8 +280,8 @@ class TestFormatAlertMessageEdgeCases:
 
     def test_different_thresholds_reflected(self) -> None:
         """Different threshold values appear in output differently."""
-        payload1 = _make_payload(threshold=0.35)
-        payload2 = _make_payload(threshold=0.50)
+        payload1 = make_payload(threshold=0.35)
+        payload2 = make_payload(threshold=0.50)
 
         result1 = format_alert_message(payload1)
         result2 = format_alert_message(payload2)
@@ -314,7 +295,7 @@ class TestFormatAlertMessageReadability:
 
     def test_message_has_reasonable_length(self) -> None:
         """Formatted message has reasonable length for Telegram."""
-        payload = _make_payload()
+        payload = make_payload()
         result = format_alert_message(payload)
 
         # Telegram message limit is 4096, but alert should be concise
@@ -322,7 +303,7 @@ class TestFormatAlertMessageReadability:
 
     def test_message_is_multiline_or_structured(self) -> None:
         """Message should have some structure (newlines or delimiters)."""
-        payload = _make_payload()
+        payload = make_payload()
         result = format_alert_message(payload)
 
         # Should have some structure - either newlines, colons, or other delimiters
@@ -333,7 +314,7 @@ class TestFormatAlertMessageReadability:
 
     def test_message_contains_alert_indicator(self) -> None:
         """Message should indicate this is an alert somehow."""
-        payload = _make_payload()
+        payload = make_payload()
         result = format_alert_message(payload)
 
         # Should contain some alert-related word
