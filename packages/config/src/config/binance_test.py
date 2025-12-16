@@ -47,22 +47,18 @@ class TestBinanceSettings:
         settings = BinanceSettings(symbols=["btcusdt", "dotusdt"])
         assert settings.symbols == ["BTCUSDT", "DOTUSDT"]
 
-    def test_empty_symbols_string_raises_error(self) -> None:
-        """Empty symbols string raises ValidationError."""
+    @pytest.mark.parametrize(
+        "symbols",
+        [
+            pytest.param("", id="empty_string"),
+            pytest.param("   ,  ,  ", id="whitespace_only"),
+            pytest.param([], id="empty_list"),
+        ],
+    )
+    def test_empty_symbols_raises_error(self, symbols: str | list[str]) -> None:
+        """Empty or whitespace-only symbols raises ValidationError."""
         with pytest.raises(ValidationError) as exc_info:
-            BinanceSettings(symbols="")
-        assert "symbols must contain at least one item" in str(exc_info.value)
-
-    def test_whitespace_only_symbols_raises_error(self) -> None:
-        """Whitespace-only symbols raises ValidationError."""
-        with pytest.raises(ValidationError) as exc_info:
-            BinanceSettings(symbols="   ,  ,  ")
-        assert "symbols must contain at least one item" in str(exc_info.value)
-
-    def test_empty_symbols_list_raises_error(self) -> None:
-        """Empty symbols list raises ValidationError."""
-        with pytest.raises(ValidationError) as exc_info:
-            BinanceSettings(symbols=[])
+            BinanceSettings(symbols=symbols)
         assert "symbols must contain at least one item" in str(exc_info.value)
 
     def test_valid_wss_url(self) -> None:
@@ -89,16 +85,17 @@ class TestBinanceSettings:
         )
         assert settings.ws_url == "wss://stream.binance.com/ws"
 
-    def test_invalid_ws_url_protocol_raises_error(self) -> None:
+    @pytest.mark.parametrize(
+        "invalid_url",
+        [
+            pytest.param("https://binance.com", id="https_protocol"),
+            pytest.param("http://binance.com", id="http_protocol"),
+        ],
+    )
+    def test_invalid_ws_url_protocol_raises_error(self, invalid_url: str) -> None:
         """Non-websocket URL raises ValidationError."""
         with pytest.raises(ValidationError) as exc_info:
-            BinanceSettings(symbols="BTCUSDT", ws_url="https://binance.com")
-        assert "ws_url must start with ws:// or wss://" in str(exc_info.value)
-
-    def test_http_url_raises_error(self) -> None:
-        """HTTP URL raises ValidationError."""
-        with pytest.raises(ValidationError) as exc_info:
-            BinanceSettings(symbols="BTCUSDT", ws_url="http://binance.com")
+            BinanceSettings(symbols="BTCUSDT", ws_url=invalid_url)
         assert "ws_url must start with ws:// or wss://" in str(exc_info.value)
 
     def test_top_n_levels_minimum_boundary(self) -> None:
@@ -111,22 +108,18 @@ class TestBinanceSettings:
         settings = BinanceSettings(symbols="BTCUSDT", top_n_levels=MAX_TOP_N_LEVELS)
         assert settings.top_n_levels == MAX_TOP_N_LEVELS
 
-    def test_top_n_levels_below_minimum_raises_error(self) -> None:
-        """top_n_levels below minimum raises ValidationError."""
+    @pytest.mark.parametrize(
+        "invalid_value",
+        [
+            pytest.param(0, id="below_minimum"),
+            pytest.param(101, id="above_maximum"),
+            pytest.param(-5, id="negative"),
+        ],
+    )
+    def test_invalid_top_n_levels_raises_error(self, invalid_value: int) -> None:
+        """Invalid top_n_levels values raise ValidationError."""
         with pytest.raises(ValidationError) as exc_info:
-            BinanceSettings(symbols="BTCUSDT", top_n_levels=0)
-        assert "top_n_levels must be between" in str(exc_info.value)
-
-    def test_top_n_levels_above_maximum_raises_error(self) -> None:
-        """top_n_levels above maximum raises ValidationError."""
-        with pytest.raises(ValidationError) as exc_info:
-            BinanceSettings(symbols="BTCUSDT", top_n_levels=101)
-        assert "top_n_levels must be between" in str(exc_info.value)
-
-    def test_negative_top_n_levels_raises_error(self) -> None:
-        """Negative top_n_levels raises ValidationError."""
-        with pytest.raises(ValidationError) as exc_info:
-            BinanceSettings(symbols="BTCUSDT", top_n_levels=-5)
+            BinanceSettings(symbols="BTCUSDT", top_n_levels=invalid_value)
         assert "top_n_levels must be between" in str(exc_info.value)
 
     def test_settings_are_immutable(self) -> None:

@@ -35,28 +35,19 @@ class TestAlertingSettings:
         settings = AlertingSettings(imbalance_threshold=0.0)
         assert settings.imbalance_threshold == 0.0
 
-    def test_threshold_at_positive_one_raises_error(self) -> None:
-        """Threshold of exactly 1.0 raises ValidationError."""
+    @pytest.mark.parametrize(
+        "invalid_threshold",
+        [
+            pytest.param(1.0, id="exactly_positive_one"),
+            pytest.param(-1.0, id="exactly_negative_one"),
+            pytest.param(1.5, id="above_one"),
+            pytest.param(-1.5, id="below_negative_one"),
+        ],
+    )
+    def test_invalid_threshold_raises_error(self, invalid_threshold: float) -> None:
+        """Threshold outside open interval (-1.0, 1.0) raises ValidationError."""
         with pytest.raises(ValidationError) as exc_info:
-            AlertingSettings(imbalance_threshold=1.0)
-        assert "imbalance_threshold must be in range (-1.0, 1.0)" in str(exc_info.value)
-
-    def test_threshold_at_negative_one_raises_error(self) -> None:
-        """Threshold of exactly -1.0 raises ValidationError."""
-        with pytest.raises(ValidationError) as exc_info:
-            AlertingSettings(imbalance_threshold=-1.0)
-        assert "imbalance_threshold must be in range (-1.0, 1.0)" in str(exc_info.value)
-
-    def test_threshold_above_one_raises_error(self) -> None:
-        """Threshold greater than 1.0 raises ValidationError."""
-        with pytest.raises(ValidationError) as exc_info:
-            AlertingSettings(imbalance_threshold=1.5)
-        assert "imbalance_threshold must be in range (-1.0, 1.0)" in str(exc_info.value)
-
-    def test_threshold_below_negative_one_raises_error(self) -> None:
-        """Threshold less than -1.0 raises ValidationError."""
-        with pytest.raises(ValidationError) as exc_info:
-            AlertingSettings(imbalance_threshold=-1.5)
+            AlertingSettings(imbalance_threshold=invalid_threshold)
         assert "imbalance_threshold must be in range (-1.0, 1.0)" in str(exc_info.value)
 
     def test_custom_cooldown_seconds(self) -> None:

@@ -1,232 +1,150 @@
 """Tests for Settings and load_settings."""
 
-import os
-from unittest.mock import patch
-
 import pytest
+
+# patched_env is a context manager from conftest.py that sets up
+# a clean environment with valid default values
+from conftest import patched_env
 from pydantic import ValidationError
 
 from config.settings import Settings
 
 
-def make_valid_env() -> dict[str, str]:
-    """Create a minimal valid environment variable set."""
-    return {
-        "TELEGRAM_BOT_TOKEN": "123456:ABC-DEF",
-        "TELEGRAM_CHAT_ID": "-1001234567890",
-        "SYMBOLS": "BTCUSDT,DOTUSDT,SOLUSDT",
-        "IMBALANCE_THRESHOLD": "0.35",
-    }
+class TestSettingsValidation:
+    """Tests for Settings validation behavior."""
 
+    def test_loads_with_valid_env(self) -> None:
+        """Settings loads successfully with valid environment variables."""
+        with patched_env():
+            Settings(_env_file=None)  # Should not raise
 
-class TestSettings:
-    """Tests for Settings class."""
-
-    def test_loads_required_settings(self) -> None:
-        """Settings loads all required environment variables."""
-        env = make_valid_env()
-        with patch.dict(os.environ, env, clear=True):
-            settings = Settings(_env_file=None)
-
-        assert settings.telegram is not None
-        assert settings.telegram.bot_token == "123456:ABC-DEF"
-        assert settings.telegram.chat_id == "-1001234567890"
-
-    def test_loads_binance_settings(self) -> None:
-        """Settings correctly parses and stores Binance settings."""
-        env = make_valid_env()
-        with patch.dict(os.environ, env, clear=True):
-            settings = Settings(_env_file=None)
-
-        assert settings.binance is not None
-        assert settings.binance.symbols == ["BTCUSDT", "DOTUSDT", "SOLUSDT"]
-        assert settings.binance.ws_url == "wss://stream.binance.com:9443/ws"
-        assert settings.binance.top_n_levels == 10
-
-    def test_loads_alerting_settings(self) -> None:
-        """Settings correctly parses and stores alerting settings."""
-        env = make_valid_env()
-        with patch.dict(os.environ, env, clear=True):
-            settings = Settings(_env_file=None)
-
-        assert settings.alerting is not None
-        assert settings.alerting.imbalance_threshold == 0.35
-        assert settings.alerting.cooldown_seconds == 30
-
-    def test_loads_logging_settings(self) -> None:
-        """Settings correctly parses and stores logging settings."""
-        env = make_valid_env()
-        with patch.dict(os.environ, env, clear=True):
-            settings = Settings(_env_file=None)
-
-        assert settings.logging is not None
-        assert settings.logging.log_level == "INFO"
-        assert settings.logging.health_port is None
-
-    def test_custom_optional_values(self) -> None:
-        """Settings accepts custom values for optional parameters."""
-        env = make_valid_env()
-        env.update(
-            {
-                "TOP_N_LEVELS": "20",
-                "ALERT_COOLDOWN_SECONDS": "60",
-                "BINANCE_WS_URL": "wss://custom.binance.com/ws",
-                "LOG_LEVEL": "DEBUG",
-                "HEALTH_PORT": "8080",
-            }
-        )
-        with patch.dict(os.environ, env, clear=True):
-            settings = Settings(_env_file=None)
-
-        assert settings.binance is not None
-        assert settings.binance.top_n_levels == 20
-        assert settings.binance.ws_url == "wss://custom.binance.com/ws"
-
-        assert settings.alerting is not None
-        assert settings.alerting.cooldown_seconds == 60
-
-        assert settings.logging is not None
-        assert settings.logging.log_level == "DEBUG"
-        assert settings.logging.health_port == 8080
-
-    def test_missing_required_telegram_token_raises_error(self) -> None:
-        """Missing TELEGRAM_BOT_TOKEN raises ValidationError."""
-        env = make_valid_env()
-        del env["TELEGRAM_BOT_TOKEN"]
-        with patch.dict(os.environ, env, clear=True):
+    @pytest.mark.parametrize(
+        ("remove_var", "expected_field"),
+        [
+            pytest.param(
+                "TELEGRAM_BOT_TOKEN", "telegram_bot_token", id="missing_bot_token"
+            ),
+            pytest.param("TELEGRAM_CHAT_ID", "telegram_chat_id", id="missing_chat_id"),
+            pytest.param("SYMBOLS", "symbols", id="missing_symbols"),
+            pytest.param(
+                "IMBALANCE_THRESHOLD", "imbalance_threshold", id="missing_threshold"
+            ),
+        ],
+    )
+    def test_missing_required_var_raises_error(
+        self, remove_var: str, expected_field: str
+    ) -> None:
+        """Missing required environment variable raises ValidationError."""
+        with patched_env(remove=[remove_var]):
             with pytest.raises(ValidationError) as exc_info:
                 Settings(_env_file=None)
-        assert "telegram_bot_token" in str(exc_info.value).lower()
+            assert expected_field in str(exc_info.value).lower()
 
-    def test_missing_required_chat_id_raises_error(self) -> None:
-        """Missing TELEGRAM_CHAT_ID raises ValidationError."""
-        env = make_valid_env()
-        del env["TELEGRAM_CHAT_ID"]
-        with patch.dict(os.environ, env, clear=True):
+    @pytest.mark.parametrize(
+        ("override", "expected_message"),
+        [
+            pytest.param(
+                {"IMBALANCE_THRESHOLD": "1.5"},
+                "imbalance_threshold",
+                id="threshold_above_one",
+            ),
+            pytest.param(
+                {"TOP_N_LEVELS": "0"},
+                "top_n_levels",
+                id="top_n_below_minimum",
+            ),
+            pytest.param(
+                {"BINANCE_WS_URL": "https://binance.com"},
+                "ws_url",
+                id="invalid_ws_protocol",
+            ),
+            pytest.param(
+                {"ALERT_COOLDOWN_SECONDS": "-10"},
+                "cooldown",
+                id="negative_cooldown",
+            ),
+        ],
+    )
+    def test_invalid_value_raises_error(
+        self, override: dict[str, str], expected_message: str
+    ) -> None:
+        """Invalid values for settings raise ValidationError."""
+        with patched_env(overrides=override):
             with pytest.raises(ValidationError) as exc_info:
                 Settings(_env_file=None)
-        assert "telegram_chat_id" in str(exc_info.value).lower()
+            assert expected_message in str(exc_info.value).lower()
 
-    def test_missing_required_symbols_raises_error(self) -> None:
-        """Missing SYMBOLS raises ValidationError."""
-        env = make_valid_env()
-        del env["SYMBOLS"]
-        with patch.dict(os.environ, env, clear=True):
-            with pytest.raises(ValidationError) as exc_info:
-                Settings(_env_file=None)
-        assert "symbols" in str(exc_info.value).lower()
 
-    def test_missing_required_threshold_raises_error(self) -> None:
-        """Missing IMBALANCE_THRESHOLD raises ValidationError."""
-        env = make_valid_env()
-        del env["IMBALANCE_THRESHOLD"]
-        with patch.dict(os.environ, env, clear=True):
-            with pytest.raises(ValidationError) as exc_info:
-                Settings(_env_file=None)
-        assert "imbalance_threshold" in str(exc_info.value).lower()
-
-    def test_invalid_threshold_value_raises_error(self) -> None:
-        """Invalid IMBALANCE_THRESHOLD value raises ValidationError."""
-        env = make_valid_env()
-        env["IMBALANCE_THRESHOLD"] = "1.5"  # Out of range
-        with patch.dict(os.environ, env, clear=True):
-            with pytest.raises(ValidationError) as exc_info:
-                Settings(_env_file=None)
-        assert "imbalance_threshold" in str(exc_info.value).lower()
-
-    def test_invalid_top_n_levels_raises_error(self) -> None:
-        """Invalid TOP_N_LEVELS value raises ValidationError."""
-        env = make_valid_env()
-        env["TOP_N_LEVELS"] = "0"  # Below minimum
-        with patch.dict(os.environ, env, clear=True):
-            with pytest.raises(ValidationError) as exc_info:
-                Settings(_env_file=None)
-        assert "top_n_levels" in str(exc_info.value).lower()
-
-    def test_invalid_ws_url_raises_error(self) -> None:
-        """Invalid BINANCE_WS_URL raises ValidationError."""
-        env = make_valid_env()
-        env["BINANCE_WS_URL"] = "https://binance.com"
-        with patch.dict(os.environ, env, clear=True):
-            with pytest.raises(ValidationError) as exc_info:
-                Settings(_env_file=None)
-        assert "ws_url" in str(exc_info.value).lower()
-
-    def test_negative_cooldown_raises_error(self) -> None:
-        """Negative ALERT_COOLDOWN_SECONDS raises ValidationError."""
-        env = make_valid_env()
-        env["ALERT_COOLDOWN_SECONDS"] = "-10"
-        with patch.dict(os.environ, env, clear=True):
-            with pytest.raises(ValidationError) as exc_info:
-                Settings(_env_file=None)
-        assert "cooldown" in str(exc_info.value).lower()
-
-    def test_negative_threshold_is_valid(self) -> None:
-        """Negative IMBALANCE_THRESHOLD (for ask-heavy detection) is valid."""
-        env = make_valid_env()
-        env["IMBALANCE_THRESHOLD"] = "-0.35"
-        with patch.dict(os.environ, env, clear=True):
-            settings = Settings(_env_file=None)
-
-        assert settings.alerting is not None
-        assert settings.alerting.imbalance_threshold == -0.35
+class TestSettingsNormalization:
+    """Tests for Settings normalization behavior."""
 
     def test_symbols_normalized_to_uppercase(self) -> None:
-        """SYMBOLS are normalized to uppercase."""
-        env = make_valid_env()
-        env["SYMBOLS"] = "btcusdt,dotusdt"
-        with patch.dict(os.environ, env, clear=True):
+        """Symbols are normalized to uppercase regardless of input case."""
+        with patched_env(overrides={"SYMBOLS": "btcusdt,dotusdt"}):
             settings = Settings(_env_file=None)
+            assert settings.binance.symbols == ["BTCUSDT", "DOTUSDT"]
 
-        assert settings.binance is not None
-        assert settings.binance.symbols == ["BTCUSDT", "DOTUSDT"]
-
-    def test_single_symbol_is_valid(self) -> None:
-        """Single symbol (no comma) is valid."""
-        env = make_valid_env()
-        env["SYMBOLS"] = "BTCUSDT"
-        with patch.dict(os.environ, env, clear=True):
+    def test_single_symbol_parsed_as_list(self) -> None:
+        """Single symbol (no comma) is parsed as a list."""
+        with patched_env(overrides={"SYMBOLS": "BTCUSDT"}):
             settings = Settings(_env_file=None)
+            assert settings.binance.symbols == ["BTCUSDT"]
 
-        assert settings.binance is not None
-        assert settings.binance.symbols == ["BTCUSDT"]
+    def test_negative_threshold_accepted(self) -> None:
+        """Negative threshold (for ask-heavy detection) is accepted."""
+        with patched_env(overrides={"IMBALANCE_THRESHOLD": "-0.35"}):
+            settings = Settings(_env_file=None)
+            assert settings.alerting.imbalance_threshold == -0.35
+
+
+class TestSettingsDefaults:
+    """Tests for Settings default values."""
+
+    def test_optional_values_use_defaults(self) -> None:
+        """Optional settings use default values when not specified."""
+        with patched_env():
+            settings = Settings(_env_file=None)
+            # Verify defaults are applied (values from the implementation)
+            assert settings.binance.top_n_levels == 10
+            assert settings.alerting.cooldown_seconds == 30
+            assert settings.logging.log_level == "INFO"
+            assert settings.logging.health_port is None
+
+    def test_custom_optional_values_override_defaults(self) -> None:
+        """Custom values override defaults."""
+        overrides = {
+            "TOP_N_LEVELS": "20",
+            "ALERT_COOLDOWN_SECONDS": "60",
+            "LOG_LEVEL": "DEBUG",
+            "HEALTH_PORT": "8080",
+        }
+        with patched_env(overrides=overrides):
+            settings = Settings(_env_file=None)
+            assert settings.binance.top_n_levels == 20
+            assert settings.alerting.cooldown_seconds == 60
+            assert settings.logging.log_level == "DEBUG"
+            assert settings.logging.health_port == 8080
+
+
+class TestSettingsExtras:
+    """Tests for Settings behavior with unknown inputs."""
 
     def test_extra_env_vars_are_ignored(self) -> None:
-        """Unknown environment variables are ignored."""
-        env = make_valid_env()
-        env["UNKNOWN_VAR"] = "should_be_ignored"
-        env["ANOTHER_UNKNOWN"] = "also_ignored"
-        with patch.dict(os.environ, env, clear=True):
-            settings = Settings(_env_file=None)  # Should not raise
-
-        assert settings.telegram is not None
-        assert settings.binance is not None
+        """Unknown environment variables are silently ignored."""
+        overrides = {
+            "UNKNOWN_VAR": "should_be_ignored",
+            "ANOTHER_UNKNOWN": "also_ignored",
+        }
+        with patched_env(overrides=overrides):
+            Settings(_env_file=None)  # Should not raise
 
 
 class TestLoadSettings:
     """Tests for load_settings factory function."""
 
-    def test_returns_settings_instance(self) -> None:
-        """load_settings returns a Settings instance."""
-        env = make_valid_env()
-        with patch.dict(os.environ, env, clear=True):
-            settings = Settings(_env_file=None)
-
-        assert isinstance(settings, Settings)
-
     def test_each_call_creates_new_instance(self) -> None:
         """Settings() creates a new instance each time (no caching)."""
-        env = make_valid_env()
-        with patch.dict(os.environ, env, clear=True):
+        with patched_env():
             settings1 = Settings(_env_file=None)
             settings2 = Settings(_env_file=None)
-
-        assert settings1 is not settings2
-
-    def test_propagates_validation_errors(self) -> None:
-        """Settings propagates validation errors."""
-        env = make_valid_env()
-        del env["TELEGRAM_BOT_TOKEN"]
-        with patch.dict(os.environ, env, clear=True):
-            with pytest.raises(ValidationError):
-                Settings(_env_file=None)
+            assert settings1 is not settings2

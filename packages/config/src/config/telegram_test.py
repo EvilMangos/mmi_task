@@ -34,28 +34,30 @@ class TestTelegramSettings:
         )
         assert settings.chat_id == "-1001234567890"
 
-    def test_empty_bot_token_raises_error(self) -> None:
-        """Empty bot_token raises ValidationError."""
+    @pytest.mark.parametrize(
+        "invalid_bot_token",
+        [
+            pytest.param("", id="empty_string"),
+            pytest.param("   ", id="whitespace_only"),
+        ],
+    )
+    def test_invalid_bot_token_raises_error(self, invalid_bot_token: str) -> None:
+        """Empty or whitespace-only bot_token raises ValidationError."""
         with pytest.raises(ValidationError) as exc_info:
-            TelegramSettings(bot_token="", chat_id="123")
+            TelegramSettings(bot_token=invalid_bot_token, chat_id="123")
         assert "bot_token must not be empty" in str(exc_info.value)
 
-    def test_whitespace_only_bot_token_raises_error(self) -> None:
-        """Whitespace-only bot_token raises ValidationError."""
+    @pytest.mark.parametrize(
+        "invalid_chat_id",
+        [
+            pytest.param("", id="empty_string"),
+            pytest.param("  \t  ", id="whitespace_only"),
+        ],
+    )
+    def test_invalid_chat_id_raises_error(self, invalid_chat_id: str) -> None:
+        """Empty or whitespace-only chat_id raises ValidationError."""
         with pytest.raises(ValidationError) as exc_info:
-            TelegramSettings(bot_token="   ", chat_id="123")
-        assert "bot_token must not be empty" in str(exc_info.value)
-
-    def test_empty_chat_id_raises_error(self) -> None:
-        """Empty chat_id raises ValidationError."""
-        with pytest.raises(ValidationError) as exc_info:
-            TelegramSettings(bot_token="token", chat_id="")
-        assert "chat_id must not be empty" in str(exc_info.value)
-
-    def test_whitespace_only_chat_id_raises_error(self) -> None:
-        """Whitespace-only chat_id raises ValidationError."""
-        with pytest.raises(ValidationError) as exc_info:
-            TelegramSettings(bot_token="token", chat_id="  \t  ")
+            TelegramSettings(bot_token="token", chat_id=invalid_chat_id)
         assert "chat_id must not be empty" in str(exc_info.value)
 
     def test_settings_are_immutable(self) -> None:

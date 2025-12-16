@@ -57,22 +57,18 @@ class TestLoggingSettings:
         settings = LoggingSettings(health_port=65535)
         assert settings.health_port == 65535
 
-    def test_port_zero_raises_error(self) -> None:
-        """Port 0 raises ValidationError."""
+    @pytest.mark.parametrize(
+        "invalid_port",
+        [
+            pytest.param(0, id="port_zero"),
+            pytest.param(-1, id="negative_port"),
+            pytest.param(65536, id="port_above_maximum"),
+        ],
+    )
+    def test_invalid_health_port_raises_error(self, invalid_port: int) -> None:
+        """Invalid health_port values raise ValidationError."""
         with pytest.raises(ValidationError) as exc_info:
-            LoggingSettings(health_port=0)
-        assert "health_port must be between 1 and 65535" in str(exc_info.value)
-
-    def test_negative_port_raises_error(self) -> None:
-        """Negative port raises ValidationError."""
-        with pytest.raises(ValidationError) as exc_info:
-            LoggingSettings(health_port=-1)
-        assert "health_port must be between 1 and 65535" in str(exc_info.value)
-
-    def test_port_above_maximum_raises_error(self) -> None:
-        """Port above 65535 raises ValidationError."""
-        with pytest.raises(ValidationError) as exc_info:
-            LoggingSettings(health_port=65536)
+            LoggingSettings(health_port=invalid_port)
         assert "health_port must be between 1 and 65535" in str(exc_info.value)
 
     def test_none_health_port_is_valid(self) -> None:
