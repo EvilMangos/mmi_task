@@ -60,53 +60,50 @@ class TestOrderBookLevelConstruction:
 class TestOrderBookLevelValidation:
     """Tests for OrderBookLevel input validation."""
 
-    def test_rejects_negative_price(self) -> None:
-        with pytest.raises(ValueError, match="price"):
-            OrderBookLevel(price=Decimal("-1"), qty=Decimal("10"))
-
-    def test_rejects_negative_qty(self) -> None:
-        with pytest.raises(ValueError, match="qty"):
-            OrderBookLevel(price=Decimal("100"), qty=Decimal("-5"))
+    @pytest.mark.parametrize(
+        "price,qty,match_field",
+        [
+            (Decimal("-1"), Decimal("10"), "price"),
+            (Decimal("100"), Decimal("-5"), "qty"),
+        ],
+    )
+    def test_rejects_negative_values(
+        self, price: Decimal, qty: Decimal, match_field: str
+    ) -> None:
+        with pytest.raises(ValueError, match=match_field):
+            OrderBookLevel(price=price, qty=qty)
 
     def test_rejects_both_negative(self) -> None:
         with pytest.raises(ValueError):
             OrderBookLevel(price=Decimal("-100"), qty=Decimal("-5"))
 
-    def test_rejects_nan_price(self) -> None:
-        nan_decimal = Decimal("NaN")
+    @pytest.mark.parametrize(
+        "price,qty,match_field",
+        [
+            (Decimal("NaN"), Decimal("10"), "price"),
+            (Decimal("100"), Decimal("NaN"), "qty"),
+        ],
+    )
+    def test_rejects_nan_values(
+        self, price: Decimal, qty: Decimal, match_field: str
+    ) -> None:
+        with pytest.raises(ValueError, match=match_field):
+            OrderBookLevel(price=price, qty=qty)
 
-        with pytest.raises(ValueError, match="price"):
-            OrderBookLevel(price=nan_decimal, qty=Decimal("10"))
-
-    def test_rejects_nan_qty(self) -> None:
-        nan_decimal = Decimal("NaN")
-
-        with pytest.raises(ValueError, match="qty"):
-            OrderBookLevel(price=Decimal("100"), qty=nan_decimal)
-
-    def test_rejects_positive_infinity_price(self) -> None:
-        inf_decimal = Decimal("Infinity")
-
-        with pytest.raises(ValueError, match="price"):
-            OrderBookLevel(price=inf_decimal, qty=Decimal("10"))
-
-    def test_rejects_negative_infinity_price(self) -> None:
-        neg_inf_decimal = Decimal("-Infinity")
-
-        with pytest.raises(ValueError, match="price"):
-            OrderBookLevel(price=neg_inf_decimal, qty=Decimal("10"))
-
-    def test_rejects_positive_infinity_qty(self) -> None:
-        inf_decimal = Decimal("Infinity")
-
-        with pytest.raises(ValueError, match="qty"):
-            OrderBookLevel(price=Decimal("100"), qty=inf_decimal)
-
-    def test_rejects_negative_infinity_qty(self) -> None:
-        neg_inf_decimal = Decimal("-Infinity")
-
-        with pytest.raises(ValueError, match="qty"):
-            OrderBookLevel(price=Decimal("100"), qty=neg_inf_decimal)
+    @pytest.mark.parametrize(
+        "price,qty,match_field",
+        [
+            (Decimal("Infinity"), Decimal("10"), "price"),
+            (Decimal("-Infinity"), Decimal("10"), "price"),
+            (Decimal("100"), Decimal("Infinity"), "qty"),
+            (Decimal("100"), Decimal("-Infinity"), "qty"),
+        ],
+    )
+    def test_rejects_infinity_values(
+        self, price: Decimal, qty: Decimal, match_field: str
+    ) -> None:
+        with pytest.raises(ValueError, match=match_field):
+            OrderBookLevel(price=price, qty=qty)
 
 
 class TestOrderBookLevelImmutability:
