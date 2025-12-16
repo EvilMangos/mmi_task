@@ -18,3 +18,10 @@ class EngineConfig:
     cooldown_seconds: float
     hysteresis_enabled: bool = False
     hysteresis_delta: float = 0.0
+
+    def __post_init__(self) -> None:
+        """Validate configuration values."""
+        if self.cooldown_seconds < 0:
+            raise ValueError("cooldown_seconds must be >= 0")
+        if self.hysteresis_delta < 0:
+            raise ValueError("hysteresis_delta must be >= 0")

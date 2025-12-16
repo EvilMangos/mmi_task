@@ -1,9 +1,13 @@
 """SignalEvaluator class for determining when to trigger alerts."""
 
+from datetime import datetime
+
 from signal_engine.alert_decision import AlertDecision
 from signal_engine.clock import Clock
 from signal_engine.engine_config import EngineConfig
 from signal_engine.symbol_state import SymbolState
+
+_FLOAT_EPSILON = 1e-9
 
 
 class SignalEvaluator:
@@ -24,6 +28,39 @@ class SignalEvaluator:
         self._clock = clock
         self._states: dict[str, SymbolState] = {}
 
+    def _no_alert(self, symbol: str, ratio: float, reason: str) -> AlertDecision:
+        """Create an AlertDecision indicating no alert should be triggered."""
+        return AlertDecision(
+            should_alert=False,
+            reason=reason,
+            ratio=ratio,
+            symbol=symbol,
+        )
+
+    def _alert(self, symbol: str, ratio: float) -> AlertDecision:
+        """Create an AlertDecision indicating an alert should be triggered."""
+        return AlertDecision(
+            should_alert=True,
+            reason="Threshold exceeded",
+            ratio=ratio,
+            symbol=symbol,
+        )
+
+    def _maybe_rearm(self, state: SymbolState, ratio: float) -> None:
+        """Re-arm the hysteresis state if ratio has dropped below the re-arm threshold."""
+        if not self._config.hysteresis_enabled:
+            return
+        rearm_threshold = self._config.threshold - self._config.hysteresis_delta
+        if ratio <= rearm_threshold + _FLOAT_EPSILON:
+            state.is_armed = True
+
+    def _is_cooldown_active(self, state: SymbolState, now: datetime) -> bool:
+        """Check if the cooldown period is still active for the given state."""
+        if state.last_alert_time is None:
+            return False
+        elapsed = (now - state.last_alert_time).total_seconds()
+        return elapsed < self._config.cooldown_seconds
+
     def evaluate(self, symbol: str, ratio: float) -> AlertDecision:
         """Evaluate whether an alert should be triggered for the given symbol and ratio.
 
@@ -34,60 +71,24 @@ class SignalEvaluator:
         Returns:
             AlertDecision indicating whether to alert and why.
         """
-        # Step 1: Get current time and symbol state
         now = self._clock.now()
         if symbol not in self._states:
             self._states[symbol] = SymbolState(is_armed=True, last_alert_time=None)
 
         state = self._states[symbol]
 
-        # Step 2: Check if ratio is at or below threshold
         if ratio <= self._config.threshold:
-            # Check hysteresis re-arm condition
-            # Use small epsilon to handle floating-point precision issues
-            # (e.g., 0.35 - 0.10 = 0.24999... due to IEEE 754)
-            if self._config.hysteresis_enabled:
-                epsilon = 1e-9
-                rearm_threshold = self._config.threshold - self._config.hysteresis_delta
-                if ratio <= rearm_threshold + epsilon:
-                    state.is_armed = True
-            return AlertDecision(
-                should_alert=False,
-                reason="Below threshold",
-                ratio=ratio,
-                symbol=symbol,
-            )
+            self._maybe_rearm(state, ratio)
+            return self._no_alert(symbol, ratio, "Below threshold")
 
-        # Step 3: ratio > threshold at this point
-
-        # Step 4: Check hysteresis armed state
         if self._config.hysteresis_enabled and not state.is_armed:
-            return AlertDecision(
-                should_alert=False,
-                reason="Hysteresis: not re-armed",
-                ratio=ratio,
-                symbol=symbol,
-            )
+            return self._no_alert(symbol, ratio, "Hysteresis: not re-armed")
 
-        # Step 5: Check cooldown
-        if state.last_alert_time is not None:
-            elapsed = (now - state.last_alert_time).total_seconds()
-            if elapsed < self._config.cooldown_seconds:
-                return AlertDecision(
-                    should_alert=False,
-                    reason="Cooldown active",
-                    ratio=ratio,
-                    symbol=symbol,
-                )
+        if self._is_cooldown_active(state, now):
+            return self._no_alert(symbol, ratio, "Cooldown active")
 
-        # Step 6: All checks passed - trigger alert
         state.last_alert_time = now
         if self._config.hysteresis_enabled:
             state.is_armed = False
 
-        return AlertDecision(
-            should_alert=True,
-            reason="Threshold exceeded",
-            ratio=ratio,
-            symbol=symbol,
-        )
+        return self._alert(symbol, ratio)
