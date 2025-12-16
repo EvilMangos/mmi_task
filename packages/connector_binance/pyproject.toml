@@ -9,6 +9,15 @@ description = "Binance WS/REST client, emits normalized order book events"
 requires-python = ">=3.11"
 dependencies = [
     "domain-orderbook",
+    "config",
+    "observability",
+    "websockets>=12.0",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=8.0",
+    "pytest-asyncio>=0.23",
 ]
 
 [tool.hatch.build.targets.wheel]
