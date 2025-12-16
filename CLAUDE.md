@@ -243,10 +243,11 @@ Tests should be deterministic and cheap.
 
 The `packages/testkit` package provides shared testing utilities:
 
+* `Clock` - protocol for time sources (re-exported from `signal_engine.clock`, the single source of truth)
 * `FakeClock` - injectable time source for deterministic cooldown tests
 * `FakeNotifier` - records notification calls for inspection, with error simulation
 * `orderbook_builder()` - fluent API for building test `OrderBookSnapshot` objects
-* `BinanceEvents` - generates synthetic Binance websocket events
+* `BinanceEvents` - generates deterministic synthetic Binance websocket events
 
 #### Pytest Fixtures
 
@@ -338,6 +339,48 @@ notifier.clear_error()  # Remove error configuration
 # Reset state
 notifier.reset()
 ```
+
+#### BinanceEvents
+
+`BinanceEvents` generates deterministic synthetic Binance protocol events for testing:
+
+```python
+from testkit import BinanceEvents
+
+# Default: timestamps start at 2024-01-01 00:00:00 UTC (1704067200000 ms)
+events = BinanceEvents()
+
+# Custom starting timestamp
+events = BinanceEvents(initial_timestamp=1700000000000)
+
+# Generate a depth update event
+update = events.depth_update(
+    symbol="BTCUSDT",
+    bids=[("45000.00", "1.5"), ("44999.00", "2.0")],
+    asks=[("45001.00", "1.2"), ("45002.00", "1.8")],
+)
+
+# Generate a snapshot response
+snapshot = events.snapshot(
+    symbol="BTCUSDT",
+    bids=[("45000.00", "1.5")],
+    asks=[("45001.00", "1.2")],
+)
+
+# Generate a sequence of events
+sequence = events.sequence(
+    symbol="BTCUSDT",
+    updates=[
+        {"bids": [("45000.00", "1.5")], "asks": [("45001.00", "1.2")]},
+        {"bids": [("45000.00", "2.0")], "asks": [("45001.00", "1.0")]},
+    ],
+)
+```
+
+The module also exports TypedDict types for type-safe event handling:
+
+* `DepthUpdateEvent` - Binance depth update websocket event structure
+* `SnapshotResponse` - Binance REST API snapshot response structure
 
 #### App/Package-Specific Fixtures
 
