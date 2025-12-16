@@ -80,6 +80,7 @@ class TestTimedDecorator:
 
     def test_timed_decorator_preserves_return_value(self) -> None:
         """Decorator preserves the function's return value."""
+
         @timed("returning_function")
         def compute() -> dict[str, Any]:
             return {"answer": 42, "valid": True}
@@ -90,6 +91,7 @@ class TestTimedDecorator:
 
     def test_timed_decorator_preserves_exception(self) -> None:
         """Decorator re-raises exceptions from the decorated function."""
+
         @timed("failing_function")
         def failing() -> None:
             raise RuntimeError("Expected error")
@@ -99,6 +101,7 @@ class TestTimedDecorator:
 
     def test_timed_decorator_with_arguments(self) -> None:
         """Decorator works with functions that have arguments."""
+
         @timed("add_function")
         def add(a: int, b: int) -> int:
             return a + b
@@ -109,6 +112,7 @@ class TestTimedDecorator:
 
     def test_timed_decorator_with_kwargs(self) -> None:
         """Decorator works with functions that have keyword arguments."""
+
         @timed("greet_function")
         def greet(name: str, greeting: str = "Hello") -> str:
             return f"{greeting}, {name}!"
