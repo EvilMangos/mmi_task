@@ -20,11 +20,11 @@ PACKAGES=(
     "config"
     "domain_orderbook"
     "domain_imbalance"
+    "observability"
     "signal_engine"
+    "testkit"
     "connector_binance"
     "notifier_telegram"
-    "observability"
-    "testkit"
 )
 
 # List of apps
