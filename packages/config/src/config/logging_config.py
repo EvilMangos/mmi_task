@@ -2,7 +2,7 @@
 
 from typing import Literal
 
-from pydantic import BaseModel, field_validator
+from pydantic import BaseModel, ConfigDict, field_validator
 
 LogLevel = Literal["DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL"]
 
@@ -12,13 +12,15 @@ MIN_PORT = 1
 MAX_PORT = 65535
 
 
-class LoggingSettings(BaseModel, frozen=True):
+class LoggingSettings(BaseModel):
     """Settings for logging and health check endpoint.
 
     Attributes:
         log_level: Logging level for the application.
         health_port: Optional port for health check endpoint. None means disabled.
     """
+
+    model_config = ConfigDict(frozen=True)
 
     log_level: LogLevel = DEFAULT_LOG_LEVEL
     health_port: int | None = None
