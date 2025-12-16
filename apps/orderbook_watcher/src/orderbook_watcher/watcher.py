@@ -17,7 +17,6 @@ from notifier_telegram import (
 )
 from observability import get_logger
 from signal_engine import SignalEvaluator
-from testkit import Clock
 
 logger = get_logger(__name__)
 
@@ -32,7 +31,6 @@ class Watcher:
         self,
         evaluator: SignalEvaluator,
         notifier: Notifier,
-        clock: Clock,
         threshold: float,
         top_n_levels: int,
     ) -> None:
@@ -41,13 +39,11 @@ class Watcher:
         Args:
             evaluator: SignalEvaluator for threshold and cooldown decisions.
             notifier: Notifier implementation with send_alert method.
-            clock: Clock for current time.
             threshold: The imbalance threshold value.
             top_n_levels: Number of order book levels to consider.
         """
         self._evaluator = evaluator
         self._notifier = notifier
-        self._clock = clock
         self._threshold = threshold
         self._top_n_levels = top_n_levels
 
@@ -68,11 +64,8 @@ class Watcher:
         # Step 3: Compute imbalance ratio
         ratio = imbalance_ratio(bid_volume, ask_volume)
 
-        # Step 4: Get current time
-        now = self._clock.now()
-
-        # Step 5: Evaluate signal
-        decision = self._evaluator.evaluate(snapshot.symbol, ratio, now)
+        # Step 4: Evaluate signal (evaluator manages its own time via injected clock)
+        decision = self._evaluator.evaluate(snapshot.symbol, ratio)
 
         # Step 6: Send alert if triggered
         if decision.should_alert:

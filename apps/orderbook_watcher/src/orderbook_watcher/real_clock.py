@@ -6,12 +6,11 @@ that returns actual system time in UTC.
 
 from datetime import datetime, timezone
 
+from signal_engine.clock import Clock
 
-class RealClock:
-    """Production clock implementation that returns actual UTC time.
 
-    Implements the Clock protocol from testkit for dependency injection.
-    """
+class RealClock(Clock):
+    """Production clock implementation that returns actual UTC time."""
 
     def now(self) -> datetime:
         """Return the current datetime in UTC.

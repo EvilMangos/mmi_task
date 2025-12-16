@@ -11,8 +11,6 @@ Tests use FakeClock for deterministic time and FakeAlertNotifier
 to inspect sent alerts.
 """
 
-from datetime import datetime, timezone
-
 import pytest
 from domain_imbalance import imbalance_ratio
 from signal_engine import EngineConfig, SignalEvaluator
@@ -23,39 +21,25 @@ from orderbook_watcher.watcher import Watcher
 
 
 @pytest.fixture
-def fake_clock() -> FakeClock:
-    """Create a FakeClock starting at a fixed time."""
-    return FakeClock(datetime(2025, 1, 15, 12, 0, 0, tzinfo=timezone.utc))
-
-
-@pytest.fixture
-def fake_notifier() -> FakeAlertNotifier:
-    """Create a FakeAlertNotifier for testing."""
-    return FakeAlertNotifier()
-
-
-@pytest.fixture
-def signal_evaluator() -> SignalEvaluator:
-    """Create a SignalEvaluator with default test configuration."""
+def signal_evaluator(fake_clock: FakeClock) -> SignalEvaluator:
+    """Create a SignalEvaluator with default test configuration and fake clock."""
     config = EngineConfig(
         threshold=0.35,
         cooldown_seconds=30.0,
         hysteresis_enabled=False,
     )
-    return SignalEvaluator(config)
+    return SignalEvaluator(config, fake_clock)
 
 
 @pytest.fixture
 def watcher(
     signal_evaluator: SignalEvaluator,
     fake_notifier: FakeAlertNotifier,
-    fake_clock: FakeClock,
 ) -> Watcher:
     """Create a Watcher with injected test dependencies."""
     return Watcher(
         evaluator=signal_evaluator,
         notifier=fake_notifier,
-        clock=fake_clock,
         threshold=0.35,
         top_n_levels=10,
     )
@@ -217,11 +201,10 @@ class TestWatcherProcessSnapshot:
         """Watcher only uses top N levels for calculation."""
         # Create watcher with top_n_levels=2
         config = EngineConfig(threshold=0.35, cooldown_seconds=30.0)
-        evaluator = SignalEvaluator(config)
+        evaluator = SignalEvaluator(config, fake_clock)
         watcher = Watcher(
             evaluator=evaluator,
             notifier=fake_notifier,
-            clock=fake_clock,
             threshold=0.35,
             top_n_levels=2,
         )
@@ -365,11 +348,10 @@ class TestWatcherEdgeCases:
     ) -> None:
         """When ratio exactly equals threshold, no alert (threshold check is >)."""
         config = EngineConfig(threshold=0.5, cooldown_seconds=30.0)
-        evaluator = SignalEvaluator(config)
+        evaluator = SignalEvaluator(config, fake_clock)
         watcher = Watcher(
             evaluator=evaluator,
             notifier=fake_notifier,
-            clock=fake_clock,
             threshold=0.5,
             top_n_levels=10,
         )
@@ -398,11 +380,10 @@ class TestWatcherEdgeCases:
     ) -> None:
         """Different symbols have independent cooldown tracking."""
         config = EngineConfig(threshold=0.35, cooldown_seconds=30.0)
-        evaluator = SignalEvaluator(config)
+        evaluator = SignalEvaluator(config, fake_clock)
         watcher = Watcher(
             evaluator=evaluator,
             notifier=fake_notifier,
-            clock=fake_clock,
             threshold=0.35,
             top_n_levels=10,
         )

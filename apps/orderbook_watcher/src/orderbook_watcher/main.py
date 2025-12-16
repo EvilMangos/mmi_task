@@ -42,9 +42,9 @@ async def _async_main() -> None:
         hysteresis_enabled=False,  # Not configurable via env yet
     )
 
-    # 3. Create components
-    evaluator = SignalEvaluator(engine_config)
+    # 3. Create components (clock is injected into evaluator per DIP)
     clock = RealClock()
+    evaluator = SignalEvaluator(engine_config, clock)
 
     # 4. Setup shutdown event
     shutdown_event = asyncio.Event()
@@ -67,7 +67,6 @@ async def _async_main() -> None:
             watcher = Watcher(
                 evaluator=evaluator,
                 notifier=notifier,
-                clock=clock,
                 threshold=settings.alerting.imbalance_threshold,
                 top_n_levels=settings.binance.top_n_levels,
             )

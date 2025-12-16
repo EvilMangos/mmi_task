@@ -1,4 +1,14 @@
-"""Test utilities for orderbook_watcher tests."""
+"""Test utilities for orderbook_watcher tests.
+
+This module provides FakeAlertNotifier, a test double for the AlertNotifier
+protocol that uses AlertPayload objects.
+
+Note:
+    For simpler notification testing with (symbol, ratio, message) tuples,
+    use FakeNotifier from testkit instead. FakeAlertNotifier is specifically
+    for tests that need the full AlertPayload protocol with TransientNotifierError
+    and PermanentNotifierError support.
+"""
 
 from notifier_telegram import (
     AlertPayload,
@@ -8,10 +18,25 @@ from notifier_telegram import (
 
 
 class FakeAlertNotifier:
-    """A test double for the Notifier protocol.
+    """A test double for the AlertNotifier protocol.
 
     Records all send_alert calls for inspection during tests.
-    Can be configured to raise errors for testing error handling.
+    Can be configured to raise TransientNotifierError or PermanentNotifierError
+    for testing error handling.
+
+    This class implements the same interface as TelegramNotifier, accepting
+    AlertPayload objects via send_alert().
+
+    Example:
+        notifier = FakeAlertNotifier()
+        await notifier.send_alert(alert)
+        assert notifier.call_count == 1
+        assert notifier.last_call.symbol == "BTCUSDT"
+
+        # Test error handling
+        notifier.set_transient_error("Network error")
+        with pytest.raises(TransientNotifierError):
+            await notifier.send_alert(alert)
     """
 
     def __init__(self) -> None:
