@@ -4,6 +4,22 @@ from dataclasses import dataclass
 from decimal import Decimal
 
 
+def _validate_non_negative_finite(value: Decimal, field_name: str) -> None:
+    """Validate that a Decimal value is finite and non-negative.
+
+    Args:
+        value: The Decimal value to validate.
+        field_name: Name of the field for error messages.
+
+    Raises:
+        ValueError: If value is not finite or is negative.
+    """
+    if not value.is_finite():
+        raise ValueError(f"{field_name} must be finite (not NaN or Inf)")
+    if value < 0:
+        raise ValueError(f"{field_name} must be non-negative")
+
+
 @dataclass(frozen=True)
 class OrderBookLevel:
     """A single order book level with price and quantity.
@@ -18,18 +34,5 @@ class OrderBookLevel:
 
     def __post_init__(self) -> None:
         """Validate price and qty are non-negative and finite."""
-        # Check for NaN/Inf in price
-        if not self.price.is_finite():
-            raise ValueError("price must be finite (not NaN or Inf)")
-
-        # Check for NaN/Inf in qty
-        if not self.qty.is_finite():
-            raise ValueError("qty must be finite (not NaN or Inf)")
-
-        # Check for negative price
-        if self.price < 0:
-            raise ValueError("price must be non-negative")
-
-        # Check for negative qty
-        if self.qty < 0:
-            raise ValueError("qty must be non-negative")
+        _validate_non_negative_finite(self.price, "price")
+        _validate_non_negative_finite(self.qty, "qty")

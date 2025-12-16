@@ -2,8 +2,24 @@
 
 from collections.abc import Iterable
 from decimal import Decimal
+from operator import attrgetter
 
 from domain_orderbook.level import OrderBookLevel
+
+_PRICE_KEY = attrgetter("price")
+
+
+def _validate_n(n: int) -> None:
+    """Validate that n is non-negative.
+
+    Args:
+        n: The value to validate.
+
+    Raises:
+        ValueError: If n is negative.
+    """
+    if n < 0:
+        raise ValueError("n must be non-negative")
 
 
 def normalize_bids(levels: Iterable[OrderBookLevel]) -> tuple[OrderBookLevel, ...]:
@@ -15,7 +31,7 @@ def normalize_bids(levels: Iterable[OrderBookLevel]) -> tuple[OrderBookLevel, ..
     Returns:
         Tuple of levels sorted by price descending.
     """
-    return tuple(sorted(levels, key=lambda level: level.price, reverse=True))
+    return tuple(sorted(levels, key=_PRICE_KEY, reverse=True))
 
 
 def normalize_asks(levels: Iterable[OrderBookLevel]) -> tuple[OrderBookLevel, ...]:
@@ -27,7 +43,7 @@ def normalize_asks(levels: Iterable[OrderBookLevel]) -> tuple[OrderBookLevel, ..
     Returns:
         Tuple of levels sorted by price ascending.
     """
-    return tuple(sorted(levels, key=lambda level: level.price))
+    return tuple(sorted(levels, key=_PRICE_KEY))
 
 
 def top_n_bids(levels: Iterable[OrderBookLevel], n: int) -> tuple[OrderBookLevel, ...]:
@@ -43,9 +59,7 @@ def top_n_bids(levels: Iterable[OrderBookLevel], n: int) -> tuple[OrderBookLevel
     Raises:
         ValueError: If n is negative.
     """
-    if n < 0:
-        raise ValueError("n must be non-negative")
-
+    _validate_n(n)
     normalized = normalize_bids(levels)
     return normalized[:n]
 
@@ -63,9 +77,7 @@ def top_n_asks(levels: Iterable[OrderBookLevel], n: int) -> tuple[OrderBookLevel
     Raises:
         ValueError: If n is negative.
     """
-    if n < 0:
-        raise ValueError("n must be non-negative")
-
+    _validate_n(n)
     normalized = normalize_asks(levels)
     return normalized[:n]
 
@@ -79,7 +91,4 @@ def sum_volume(levels: Iterable[OrderBookLevel]) -> Decimal:
     Returns:
         Sum of all quantities as Decimal. Returns Decimal("0") for empty input.
     """
-    total = Decimal("0")
-    for level in levels:
-        total += level.qty
-    return total
+    return sum((level.qty for level in levels), start=Decimal("0"))

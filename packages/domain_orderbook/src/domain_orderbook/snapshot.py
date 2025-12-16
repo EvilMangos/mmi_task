@@ -23,7 +23,8 @@ class OrderBookSnapshot:
 
     def __post_init__(self) -> None:
         """Validate and normalize snapshot data."""
-        # Convert lists to tuples for bids and asks (frozen dataclass workaround)
+        # Normalize bids/asks to tuples. Using object.__setattr__ because
+        # frozen=True prevents direct assignment in __post_init__.
         if isinstance(self.bids, list):
             object.__setattr__(self, "bids", tuple(self.bids))
         if isinstance(self.asks, list):
