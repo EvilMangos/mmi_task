@@ -1,0 +1,15 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "testkit"
+version = "0.1.0"
+description = "Fixtures, fakes (fake order books, fake clock, etc.)"
+requires-python = ">=3.11"
+dependencies = [
+    "domain-orderbook",
+]
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/testkit"]

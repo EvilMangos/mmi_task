@@ -1,0 +1,15 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "signal-engine"
+version = "0.1.0"
+description = "Threshold rules + dedupe/cooldown + should alert?"
+requires-python = ">=3.11"
+dependencies = [
+    "domain-imbalance",
+]
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/signal_engine"]

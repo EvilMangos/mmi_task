@@ -1,0 +1,15 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "connector-binance"
+version = "0.1.0"
+description = "Binance WS/REST client, emits normalized order book events"
+requires-python = ">=3.11"
+dependencies = [
+    "domain-orderbook",
+]
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/connector_binance"]

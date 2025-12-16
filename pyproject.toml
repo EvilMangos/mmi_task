@@ -1,0 +1,25 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "orderbook-monorepo"
+version = "0.1.0"
+description = "Orderbook monitoring monorepo"
+requires-python = ">=3.11"
+dependencies = []
+
+[tool.hatch.build]
+only-packages = true
+
+[tool.ruff]
+line-length = 100
+target-version = "py311"
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "W"]
+
+[tool.pytest.ini_options]
+testpaths = ["apps", "packages"]
+python_files = ["test_*.py"]
+python_functions = ["test_*"]
