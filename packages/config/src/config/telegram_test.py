@@ -62,4 +62,4 @@ class TestTelegramSettings:
         """Settings object is frozen and cannot be modified."""
         settings = TelegramSettings(bot_token="token", chat_id="123")
         with pytest.raises(ValidationError):
-            settings.bot_token = "new_token"  # type: ignore[misc]
+            setattr(settings, "bot_token", "new_token")

@@ -1,19 +1,14 @@
 """Alerting and signal engine settings."""
 
-from pydantic import BaseModel, field_validator
+from pydantic import BaseModel, ConfigDict, field_validator
 
 DEFAULT_COOLDOWN_SECONDS = 30
 
 
-class AlertingSettings(BaseModel, frozen=True):
-    """Settings for alert threshold and cooldown behavior.
+class AlertingSettings(BaseModel):
+    """Settings for alert threshold and cooldown behavior."""
 
-    Attributes:
-        imbalance_threshold: Threshold for imbalance ratio to trigger alerts.
-            Must be in range (-1.0, 1.0). Positive values detect bid-heavy
-            imbalance, negative values detect ask-heavy imbalance.
-        cooldown_seconds: Minimum seconds between alerts for the same symbol.
-    """
+    model_config = ConfigDict(frozen=True)
 
     imbalance_threshold: float
     cooldown_seconds: int = DEFAULT_COOLDOWN_SECONDS
