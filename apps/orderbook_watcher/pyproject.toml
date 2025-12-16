@@ -17,8 +17,20 @@ dependencies = [
     "observability",
 ]
 
+[project.optional-dependencies]
+dev = [
+    "pytest>=7.0",
+    "pytest-asyncio>=0.21",
+    "testkit",
+]
+
 [project.scripts]
 orderbook-watcher = "orderbook_watcher.main:main"
 
 [tool.hatch.build.targets.wheel]
 packages = ["src/orderbook_watcher"]
+
+[tool.pytest.ini_options]
+asyncio_mode = "auto"
+testpaths = ["src/orderbook_watcher"]
+python_files = ["*_test.py"]

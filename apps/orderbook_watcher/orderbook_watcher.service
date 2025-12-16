@@ -1,0 +1,26 @@
+[Unit]
+Description=Orderbook Watcher Service
+After=network.target
+
+[Service]
+Type=simple
+User=orderbook
+Group=orderbook
+WorkingDirectory=/opt/orderbook_watcher
+EnvironmentFile=/etc/orderbook_watcher/config
+ExecStart=/opt/orderbook_watcher/.venv/bin/python -m orderbook_watcher
+Restart=on-failure
+RestartSec=10
+
+# Logging
+StandardOutput=journal
+StandardError=journal
+
+# Security hardening
+NoNewPrivileges=true
+ProtectSystem=strict
+ProtectHome=true
+PrivateTmp=true
+
+[Install]
+WantedBy=multi-user.target

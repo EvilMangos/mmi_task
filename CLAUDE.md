@@ -74,10 +74,10 @@ pip install -e "apps/orderbook_watcher[dev]"
 Run the deployable app:
 
 ```bash
-python -m orderbook_watcher.main
+python -m orderbook_watcher
 ```
 
-(Alternatively, if an entrypoint exists:)
+Or via the console entrypoint (if installed):
 
 ```bash
 orderbook-watcher
@@ -121,10 +121,14 @@ mypy .
 crypto-orderbook-alerts/
 ├── apps/
 │   └── orderbook_watcher/                 # deployable async service
+│       ├── Dockerfile                     # container image
+│       ├── orderbook_watcher.service      # systemd unit for deployment
 │       └── src/orderbook_watcher/
-│           ├── main.py                    # bootstrap + shutdown
-│           ├── watcher.py                 # (planned) wiring: stream -> compute -> evaluate -> notify
-│           └── health.py                  # (planned) optional health/metrics endpoint
+│           ├── __main__.py                # module runner (python -m orderbook_watcher)
+│           ├── main.py                    # bootstrap + graceful shutdown
+│           ├── watcher.py                 # wiring: stream -> compute -> evaluate -> notify
+│           ├── real_clock.py              # production Clock implementation (UTC)
+│           └── health.py                  # optional /health and /metrics endpoints
 ├── scripts/
 │   ├── lint_and_format.sh                 # run ruff format + ruff check
 │   └── reinstall_packages.sh              # uninstall and reinstall all local packages
