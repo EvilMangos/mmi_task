@@ -156,7 +156,11 @@ class TelegramNotifier:
 
         Call this when done sending alerts if not using the context manager.
         """
-        if self._session is not None and self._owns_session and not self._session.closed:
+        if (
+            self._session is not None
+            and self._owns_session
+            and not self._session.closed
+        ):
             await self._session.close()
             self._session = None
             self._owns_session = False
@@ -269,4 +273,6 @@ class TelegramNotifier:
                 await asyncio.sleep(delay)
 
         # All retries exhausted - raise transient error
-        raise _create_retry_exhausted_error(last_exception, last_status_code, self._max_retries)
+        raise _create_retry_exhausted_error(
+            last_exception, last_status_code, self._max_retries
+        )

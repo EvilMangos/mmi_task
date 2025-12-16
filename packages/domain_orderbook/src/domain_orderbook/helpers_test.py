@@ -16,6 +16,7 @@ from domain_orderbook.helpers import (
     top_n_bids,
 )
 
+
 class TestNormalizeBids:
     """Tests for normalize_bids function.
 
