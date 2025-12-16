@@ -6,7 +6,19 @@ belong here - no concrete implementations.
 """
 
 from contracts.clock import Clock
+from contracts.notifier import (
+    AlertPayload,
+    Notifier,
+    NotifierError,
+    PermanentNotifierError,
+    TransientNotifierError,
+)
 
 __all__ = [
+    "AlertPayload",
     "Clock",
+    "Notifier",
+    "NotifierError",
+    "PermanentNotifierError",
+    "TransientNotifierError",
 ]

@@ -8,6 +8,7 @@ version = "0.1.0"
 description = "Telegram bot client + message formatting"
 requires-python = ">=3.11"
 dependencies = [
+    "contracts",
     "aiohttp>=3.9.0",
 ]
 

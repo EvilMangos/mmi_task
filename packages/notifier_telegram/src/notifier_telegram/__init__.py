@@ -7,7 +7,6 @@ from notifier_telegram.exceptions import (
     TransientNotifierError,
 )
 from notifier_telegram.message_formatter import format_alert_message
-from notifier_telegram.notifier_protocol import Notifier
 from notifier_telegram.telegram_notifier import TelegramNotifier
 
 __all__ = [
@@ -16,6 +15,5 @@ __all__ = [
     "PermanentNotifierError",
     "TransientNotifierError",
     "format_alert_message",
-    "Notifier",
     "TelegramNotifier",
 ]

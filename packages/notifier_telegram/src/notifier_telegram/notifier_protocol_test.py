@@ -16,7 +16,7 @@ import asyncio
 import pytest
 
 from notifier_telegram.alert_payload import AlertPayload
-from notifier_telegram.notifier_protocol import Notifier
+from contracts import Notifier
 from notifier_telegram.testing import make_payload
 
 

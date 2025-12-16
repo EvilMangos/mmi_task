@@ -9,6 +9,7 @@ COPY apps/orderbook_watcher/ apps/orderbook_watcher/
 # Install dependencies
 RUN pip install --no-cache-dir -U pip && \
     pip install --no-cache-dir \
+        -e packages/contracts \
         -e packages/config \
         -e packages/domain_orderbook \
         -e packages/domain_imbalance \
@@ -16,7 +17,6 @@ RUN pip install --no-cache-dir -U pip && \
         -e packages/connector_binance \
         -e packages/notifier_telegram \
         -e packages/observability \
-        -e packages/testkit \
         -e apps/orderbook_watcher
 
 # Run the service

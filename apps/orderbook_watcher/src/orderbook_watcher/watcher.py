@@ -7,14 +7,14 @@ The Watcher is the core processing component that:
 4. Sends alerts via the notifier
 """
 
-from domain_imbalance import imbalance_ratio
-from domain_orderbook import OrderBookSnapshot, sum_volume, top_n_asks, top_n_bids
-from notifier_telegram import (
-    AlertPayload,
+from contracts import (
     Notifier,
     PermanentNotifierError,
     TransientNotifierError,
 )
+from domain_imbalance import imbalance_ratio
+from domain_orderbook import OrderBookSnapshot, sum_volume, top_n_asks, top_n_bids
+from notifier_telegram import AlertPayload
 from observability import get_logger
 from signal_engine import SignalEvaluator
 

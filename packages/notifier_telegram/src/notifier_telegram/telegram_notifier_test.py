@@ -28,7 +28,7 @@ from notifier_telegram.exceptions import (
     PermanentNotifierError,
     TransientNotifierError,
 )
-from notifier_telegram.notifier_protocol import Notifier
+from contracts import Notifier
 from notifier_telegram.telegram_notifier import TelegramNotifier
 from notifier_telegram.testing import make_payload
 
