@@ -4,6 +4,8 @@ from __future__ import annotations
 
 import pytest
 
+from observability.debug import is_debug_enabled
+
 
 class TestIsDebugEnabled:
     """Tests for is_debug_enabled function."""
@@ -12,8 +14,6 @@ class TestIsDebugEnabled:
         self, monkeypatch: pytest.MonkeyPatch
     ) -> None:
         """When DEBUG env var is not set, returns False."""
-        from observability.debug import is_debug_enabled
-
         monkeypatch.delenv("DEBUG", raising=False)
 
         result = is_debug_enabled()
@@ -24,8 +24,6 @@ class TestIsDebugEnabled:
         self, monkeypatch: pytest.MonkeyPatch
     ) -> None:
         """When DEBUG is '1', returns True."""
-        from observability.debug import is_debug_enabled
-
         monkeypatch.setenv("DEBUG", "1")
 
         result = is_debug_enabled()
@@ -36,8 +34,6 @@ class TestIsDebugEnabled:
         self, monkeypatch: pytest.MonkeyPatch
     ) -> None:
         """When DEBUG is 'true', returns True."""
-        from observability.debug import is_debug_enabled
-
         monkeypatch.setenv("DEBUG", "true")
 
         result = is_debug_enabled()
@@ -48,8 +44,6 @@ class TestIsDebugEnabled:
         self, monkeypatch: pytest.MonkeyPatch
     ) -> None:
         """When DEBUG is 'yes', returns True."""
-        from observability.debug import is_debug_enabled
-
         monkeypatch.setenv("DEBUG", "yes")
 
         result = is_debug_enabled()
@@ -60,8 +54,6 @@ class TestIsDebugEnabled:
         self, monkeypatch: pytest.MonkeyPatch
     ) -> None:
         """DEBUG value check is case-insensitive."""
-        from observability.debug import is_debug_enabled
-
         monkeypatch.setenv("DEBUG", "TRUE")
         assert is_debug_enabled() is True
 
@@ -78,8 +70,6 @@ class TestIsDebugEnabled:
         self, monkeypatch: pytest.MonkeyPatch
     ) -> None:
         """When DEBUG is '0', returns False."""
-        from observability.debug import is_debug_enabled
-
         monkeypatch.setenv("DEBUG", "0")
 
         result = is_debug_enabled()
@@ -90,8 +80,6 @@ class TestIsDebugEnabled:
         self, monkeypatch: pytest.MonkeyPatch
     ) -> None:
         """When DEBUG is 'false', returns False."""
-        from observability.debug import is_debug_enabled
-
         monkeypatch.setenv("DEBUG", "false")
 
         result = is_debug_enabled()
@@ -102,8 +90,6 @@ class TestIsDebugEnabled:
         self, monkeypatch: pytest.MonkeyPatch
     ) -> None:
         """When DEBUG is a random non-truthy string, returns False."""
-        from observability.debug import is_debug_enabled
-
         monkeypatch.setenv("DEBUG", "maybe")
 
         result = is_debug_enabled()
@@ -114,8 +100,6 @@ class TestIsDebugEnabled:
         self, monkeypatch: pytest.MonkeyPatch
     ) -> None:
         """When DEBUG is empty string, returns False."""
-        from observability.debug import is_debug_enabled
-
         monkeypatch.setenv("DEBUG", "")
 
         result = is_debug_enabled()

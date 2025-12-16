@@ -7,14 +7,14 @@ from typing import Any
 
 import pytest
 
+from observability.timing import timed
+
 
 class TestTimedContextManager:
     """Tests for timed context manager usage."""
 
     def test_timed_context_manager_measures_elapsed(self) -> None:
         """Context manager measures elapsed time in seconds."""
-        from observability.timing import timed
-
         with timed("test_operation") as timer:
             time.sleep(0.1)
 
@@ -25,8 +25,6 @@ class TestTimedContextManager:
 
     def test_timed_context_manager_calls_callback(self) -> None:
         """Context manager calls on_complete callback with name and duration."""
-        from observability.timing import timed
-
         callback_calls: list[tuple[str, float]] = []
 
         def on_complete(name: str, elapsed: float) -> None:
@@ -42,8 +40,6 @@ class TestTimedContextManager:
 
     def test_timed_handles_exception(self) -> None:
         """Context manager still records time even when exception occurs."""
-        from observability.timing import timed
-
         callback_calls: list[tuple[str, float]] = []
 
         def on_complete(name: str, elapsed: float) -> None:
@@ -65,8 +61,6 @@ class TestTimedDecorator:
 
     def test_timed_decorator_measures_function(self) -> None:
         """Decorator measures function execution time."""
-        from observability.timing import timed
-
         callback_calls: list[tuple[str, float]] = []
 
         def on_complete(name: str, elapsed: float) -> None:
@@ -86,8 +80,6 @@ class TestTimedDecorator:
 
     def test_timed_decorator_preserves_return_value(self) -> None:
         """Decorator preserves the function's return value."""
-        from observability.timing import timed
-
         @timed("returning_function")
         def compute() -> dict[str, Any]:
             return {"answer": 42, "valid": True}
@@ -98,8 +90,6 @@ class TestTimedDecorator:
 
     def test_timed_decorator_preserves_exception(self) -> None:
         """Decorator re-raises exceptions from the decorated function."""
-        from observability.timing import timed
-
         @timed("failing_function")
         def failing() -> None:
             raise RuntimeError("Expected error")
@@ -109,8 +99,6 @@ class TestTimedDecorator:
 
     def test_timed_decorator_with_arguments(self) -> None:
         """Decorator works with functions that have arguments."""
-        from observability.timing import timed
-
         @timed("add_function")
         def add(a: int, b: int) -> int:
             return a + b
@@ -121,8 +109,6 @@ class TestTimedDecorator:
 
     def test_timed_decorator_with_kwargs(self) -> None:
         """Decorator works with functions that have keyword arguments."""
-        from observability.timing import timed
-
         @timed("greet_function")
         def greet(name: str, greeting: str = "Hello") -> str:
             return f"{greeting}, {name}!"

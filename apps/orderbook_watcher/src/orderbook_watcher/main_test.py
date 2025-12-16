@@ -21,23 +21,23 @@ class TestAsyncMainProcessesSnapshot:
     """Integration tests for main processing flow."""
 
     @pytest.mark.asyncio
-    async def test_async_main_processes_snapshot_and_sends_alert(self) -> None:
+    async def test_async_main_processes_snapshot_and_sends_alert(
+        self,
+        fake_clock: FakeClock,
+        fake_notifier: FakeAlertNotifier,
+    ) -> None:
         """End-to-end test: snapshot processing triggers alert when threshold exceeded."""
         # Arrange: Create components with test configuration
-        fake_clock = FakeClock(datetime(2025, 1, 15, 12, 0, 0, tzinfo=timezone.utc))
-        fake_notifier = FakeAlertNotifier()
-
         config = EngineConfig(
             threshold=0.35,
             cooldown_seconds=30.0,
             hysteresis_enabled=False,
         )
-        evaluator = SignalEvaluator(config)
+        evaluator = SignalEvaluator(config, fake_clock)
 
         watcher = Watcher(
             evaluator=evaluator,
             notifier=fake_notifier,
-            clock=fake_clock,
             threshold=0.35,
             top_n_levels=10,
         )
@@ -71,18 +71,19 @@ class TestMainWiring:
     """Tests for main module component wiring."""
 
     @pytest.mark.asyncio
-    async def test_watcher_uses_injected_clock(self) -> None:
-        """Watcher uses the injected clock for time-based decisions."""
+    async def test_evaluator_uses_injected_clock(
+        self,
+        fake_clock: FakeClock,
+        fake_notifier: FakeAlertNotifier,
+    ) -> None:
+        """Evaluator uses the injected clock for time-based cooldown decisions."""
         # Arrange
-        fake_clock = FakeClock(datetime(2025, 1, 15, 12, 0, 0, tzinfo=timezone.utc))
-        fake_notifier = FakeAlertNotifier()
         config = EngineConfig(threshold=0.35, cooldown_seconds=30.0)
-        evaluator = SignalEvaluator(config)
+        evaluator = SignalEvaluator(config, fake_clock)
 
         watcher = Watcher(
             evaluator=evaluator,
             notifier=fake_notifier,
-            clock=fake_clock,
             threshold=0.35,
             top_n_levels=10,
         )
@@ -110,18 +111,19 @@ class TestMainWiring:
         assert fake_notifier.call_count == 2
 
     @pytest.mark.asyncio
-    async def test_watcher_uses_injected_notifier(self) -> None:
+    async def test_watcher_uses_injected_notifier(
+        self,
+        fake_clock: FakeClock,
+        fake_notifier: FakeAlertNotifier,
+    ) -> None:
         """Watcher uses the injected notifier to send alerts."""
         # Arrange
-        fake_clock = FakeClock(datetime(2025, 1, 15, 12, 0, 0, tzinfo=timezone.utc))
-        fake_notifier = FakeAlertNotifier()
         config = EngineConfig(threshold=0.35, cooldown_seconds=30.0)
-        evaluator = SignalEvaluator(config)
+        evaluator = SignalEvaluator(config, fake_clock)
 
         watcher = Watcher(
             evaluator=evaluator,
             notifier=fake_notifier,
-            clock=fake_clock,
             threshold=0.35,
             top_n_levels=10,
         )
@@ -142,20 +144,20 @@ class TestMainWiring:
         assert fake_notifier.was_called_for_symbol("ETHUSDT")
 
     @pytest.mark.asyncio
-    async def test_watcher_uses_injected_evaluator(self) -> None:
+    async def test_watcher_uses_injected_evaluator(
+        self,
+        fake_clock: FakeClock,
+        fake_notifier: FakeAlertNotifier,
+    ) -> None:
         """Watcher uses the injected evaluator for threshold decisions."""
         # Arrange with different threshold
-        fake_clock = FakeClock(datetime(2025, 1, 15, 12, 0, 0, tzinfo=timezone.utc))
-        fake_notifier = FakeAlertNotifier()
-
         # High threshold that won't be exceeded
         config = EngineConfig(threshold=0.9, cooldown_seconds=30.0)
-        evaluator = SignalEvaluator(config)
+        evaluator = SignalEvaluator(config, fake_clock)
 
         watcher = Watcher(
             evaluator=evaluator,
             notifier=fake_notifier,
-            clock=fake_clock,
             threshold=0.9,  # Same high threshold
             top_n_levels=10,
         )
@@ -181,18 +183,19 @@ class TestMainConfiguration:
     """Tests for configuration handling in main."""
 
     @pytest.mark.asyncio
-    async def test_top_n_levels_configuration_affects_calculation(self) -> None:
+    async def test_top_n_levels_configuration_affects_calculation(
+        self,
+        fake_clock: FakeClock,
+        fake_notifier: FakeAlertNotifier,
+    ) -> None:
         """Different top_n_levels values affect volume calculations."""
-        fake_clock = FakeClock(datetime(2025, 1, 15, 12, 0, 0, tzinfo=timezone.utc))
-        fake_notifier = FakeAlertNotifier()
         config = EngineConfig(threshold=0.35, cooldown_seconds=30.0)
-        evaluator = SignalEvaluator(config)
+        evaluator = SignalEvaluator(config, fake_clock)
 
         # Watcher with top_n_levels=1
         watcher = Watcher(
             evaluator=evaluator,
             notifier=fake_notifier,
-            clock=fake_clock,
             threshold=0.35,
             top_n_levels=1,  # Only top 1 level
         )
@@ -215,12 +218,12 @@ class TestMainConfiguration:
         # Assert: No alert with top_n=1 (ratio 0.333)
         assert fake_notifier.call_count == 0
 
-        # Now test with top_n_levels=2
+        # Now test with top_n_levels=2 (need fresh clock and evaluator for independent test)
+        fake_clock2 = FakeClock(datetime(2025, 1, 15, 12, 0, 0, tzinfo=timezone.utc))
         fake_notifier.reset()
         watcher2 = Watcher(
-            evaluator=SignalEvaluator(config),
+            evaluator=SignalEvaluator(config, fake_clock2),
             notifier=fake_notifier,
-            clock=fake_clock,
             threshold=0.35,
             top_n_levels=2,  # Top 2 levels
         )

@@ -2,15 +2,17 @@
 
 from __future__ import annotations
 
+from observability.counter import Counter
+from observability.gauge import Gauge
+from observability.prometheus_exporter import format_prometheus
+from observability.registry import MetricsRegistry
+
 
 class TestFormatPrometheusBasic:
     """Tests for basic Prometheus formatting."""
 
     def test_format_prometheus_empty_registry(self) -> None:
         """Formatting an empty registry produces empty output."""
-        from observability.prometheus_exporter import format_prometheus
-        from observability.registry import MetricsRegistry
-
         registry = MetricsRegistry()
         result = format_prometheus(registry)
 
@@ -18,10 +20,6 @@ class TestFormatPrometheusBasic:
 
     def test_format_prometheus_counter(self) -> None:
         """Counter is formatted with TYPE counter."""
-        from observability.counter import Counter
-        from observability.prometheus_exporter import format_prometheus
-        from observability.registry import MetricsRegistry
-
         registry = MetricsRegistry()
         counter = Counter(name="http_requests", description="HTTP request count")
         counter.inc(42.0)
@@ -38,10 +36,6 @@ class TestFormatPrometheusBasic:
 
     def test_format_prometheus_gauge(self) -> None:
         """Gauge is formatted with TYPE gauge."""
-        from observability.gauge import Gauge
-        from observability.prometheus_exporter import format_prometheus
-        from observability.registry import MetricsRegistry
-
         registry = MetricsRegistry()
         gauge = Gauge(name="temperature", description="Current temperature")
         gauge.set(23.5)
@@ -60,10 +54,6 @@ class TestFormatPrometheusWithLabels:
 
     def test_format_prometheus_with_labels(self) -> None:
         """Metrics with labels are formatted correctly."""
-        from observability.counter import Counter
-        from observability.prometheus_exporter import format_prometheus
-        from observability.registry import MetricsRegistry
-
         registry = MetricsRegistry()
         counter = Counter(
             name="http_requests",
@@ -88,10 +78,6 @@ class TestFormatPrometheusEscaping:
 
     def test_format_prometheus_escapes_special_chars(self) -> None:
         """Label values with special characters are properly escaped."""
-        from observability.counter import Counter
-        from observability.prometheus_exporter import format_prometheus
-        from observability.registry import MetricsRegistry
-
         registry = MetricsRegistry()
         counter = Counter(
             name="events",
@@ -118,11 +104,6 @@ class TestFormatPrometheusMultipleMetrics:
 
     def test_format_prometheus_multiple_metrics(self) -> None:
         """Multiple metrics are each formatted with their own HELP/TYPE."""
-        from observability.counter import Counter
-        from observability.gauge import Gauge
-        from observability.prometheus_exporter import format_prometheus
-        from observability.registry import MetricsRegistry
-
         registry = MetricsRegistry()
 
         counter = Counter(name="requests_total", description="Total requests")

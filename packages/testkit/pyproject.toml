@@ -9,6 +9,7 @@ description = "Fixtures, fakes (fake order books, fake clock, etc.)"
 requires-python = ">=3.11"
 dependencies = [
     "domain-orderbook",
+    "signal-engine",
 ]
 
 [project.optional-dependencies]

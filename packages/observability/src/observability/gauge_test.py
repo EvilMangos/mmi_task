@@ -5,14 +5,14 @@ from __future__ import annotations
 import threading
 from concurrent.futures import ThreadPoolExecutor
 
+from observability.gauge import Gauge
+
 
 class TestGaugeBasic:
     """Tests for basic Gauge functionality."""
 
     def test_gauge_starts_at_zero(self) -> None:
         """A new gauge starts with value zero."""
-        from observability.gauge import Gauge
-
         gauge = Gauge(name="test_gauge", description="A test gauge")
         samples = gauge.collect()
 
@@ -21,8 +21,6 @@ class TestGaugeBasic:
 
     def test_gauge_set_replaces_value(self) -> None:
         """set() replaces the current value."""
-        from observability.gauge import Gauge
-
         gauge = Gauge(name="test_gauge", description="A test gauge")
 
         gauge.set(10.0)
@@ -36,8 +34,6 @@ class TestGaugeBasic:
 
     def test_gauge_inc_adds(self) -> None:
         """inc() adds to the current value."""
-        from observability.gauge import Gauge
-
         gauge = Gauge(name="test_gauge", description="A test gauge")
 
         gauge.inc(5.0)
@@ -52,8 +48,6 @@ class TestGaugeBasic:
 
     def test_gauge_dec_subtracts(self) -> None:
         """dec() subtracts from the current value."""
-        from observability.gauge import Gauge
-
         gauge = Gauge(name="test_gauge", description="A test gauge")
         gauge.set(10.0)
 
@@ -69,8 +63,6 @@ class TestGaugeBasic:
 
     def test_gauge_can_go_negative(self) -> None:
         """Gauge can have negative values."""
-        from observability.gauge import Gauge
-
         gauge = Gauge(name="test_gauge", description="A test gauge")
 
         gauge.set(-5.0)
@@ -88,8 +80,6 @@ class TestGaugeWithLabels:
 
     def test_gauge_with_labels(self) -> None:
         """Gauge supports separate values per label combination."""
-        from observability.gauge import Gauge
-
         gauge = Gauge(
             name="temperature",
             description="Temperature readings",
@@ -129,8 +119,6 @@ class TestGaugeThreadSafety:
 
     def test_gauge_is_thread_safe(self) -> None:
         """Gauge can be safely modified from multiple threads."""
-        from observability.gauge import Gauge
-
         gauge = Gauge(name="concurrent_gauge", description="Concurrent test")
         num_threads = 10
         operations_per_thread = 1000

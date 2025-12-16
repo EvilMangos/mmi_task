@@ -6,14 +6,15 @@ import json
 import logging
 from datetime import datetime
 
+from observability.correlation import correlation_context
+from observability.json_formatter import JsonFormatter
+
 
 class TestJsonFormatterFormat:
     """Tests for JsonFormatter.format method."""
 
     def test_format_produces_valid_json(self) -> None:
         """Format method returns a valid JSON string."""
-        from observability.json_formatter import JsonFormatter
-
         formatter = JsonFormatter()
         record = logging.LogRecord(
             name="test.logger",
@@ -33,8 +34,6 @@ class TestJsonFormatterFormat:
 
     def test_format_includes_required_fields(self) -> None:
         """Formatted output includes timestamp, level, logger, and message."""
-        from observability.json_formatter import JsonFormatter
-
         formatter = JsonFormatter()
         record = logging.LogRecord(
             name="myapp.module",
@@ -59,9 +58,6 @@ class TestJsonFormatterFormat:
 
     def test_format_includes_correlation_id_when_set(self) -> None:
         """When correlation ID is set, it appears in the formatted output."""
-        from observability.correlation import correlation_context
-        from observability.json_formatter import JsonFormatter
-
         formatter = JsonFormatter()
         record = logging.LogRecord(
             name="test.logger",
@@ -81,8 +77,6 @@ class TestJsonFormatterFormat:
 
     def test_format_excludes_correlation_id_when_not_set(self) -> None:
         """When no correlation ID is set, correlation_id field is null."""
-        from observability.json_formatter import JsonFormatter
-
         formatter = JsonFormatter()
         record = logging.LogRecord(
             name="test.logger",
@@ -103,8 +97,6 @@ class TestJsonFormatterFormat:
 
     def test_format_includes_extra_fields(self) -> None:
         """Extra fields passed to the log record appear in the output."""
-        from observability.json_formatter import JsonFormatter
-
         formatter = JsonFormatter()
         record = logging.LogRecord(
             name="test.logger",
@@ -132,8 +124,6 @@ class TestJsonFormatterFormat:
 
     def test_format_includes_exception_info(self) -> None:
         """When exc_info is present, exception details are included."""
-        from observability.json_formatter import JsonFormatter
-
         formatter = JsonFormatter()
 
         try:
@@ -165,8 +155,6 @@ class TestJsonFormatterFormat:
 
     def test_format_timestamp_is_iso8601(self) -> None:
         """Timestamp in the output is in ISO 8601 format."""
-        from observability.json_formatter import JsonFormatter
-
         formatter = JsonFormatter()
         record = logging.LogRecord(
             name="test.logger",

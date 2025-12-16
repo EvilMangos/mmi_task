@@ -8,14 +8,15 @@ from io import StringIO
 
 import pytest
 
+from observability.json_formatter import JsonFormatter
+from observability.logger_factory import get_logger
+
 
 class TestGetLogger:
     """Tests for get_logger function."""
 
     def test_get_logger_returns_logger_instance(self) -> None:
         """get_logger returns a logging.Logger instance."""
-        from observability.logger_factory import get_logger
-
         logger = get_logger("test.module")
 
         assert isinstance(logger, logging.Logger)
@@ -25,8 +26,6 @@ class TestGetLogger:
         self, monkeypatch: pytest.MonkeyPatch
     ) -> None:
         """Logger level is set based on LOG_LEVEL environment variable."""
-        from observability.logger_factory import get_logger
-
         monkeypatch.setenv("LOG_LEVEL", "DEBUG")
 
         # Need a unique name to avoid cached logger
@@ -38,8 +37,6 @@ class TestGetLogger:
 
     def test_get_logger_defaults_to_info(self, monkeypatch: pytest.MonkeyPatch) -> None:
         """When LOG_LEVEL is not set, logger defaults to INFO level."""
-        from observability.logger_factory import get_logger
-
         monkeypatch.delenv("LOG_LEVEL", raising=False)
 
         # Unique name
@@ -50,8 +47,6 @@ class TestGetLogger:
 
     def test_get_logger_same_name_returns_same_logger(self) -> None:
         """Calling get_logger with the same name returns the same logger instance."""
-        from observability.logger_factory import get_logger
-
         logger1 = get_logger("test.same.name")
         logger2 = get_logger("test.same.name")
 
@@ -59,9 +54,6 @@ class TestGetLogger:
 
     def test_logger_outputs_json(self, capfd: pytest.CaptureFixture[str]) -> None:
         """Logger output is valid JSON format."""
-        from observability.json_formatter import JsonFormatter
-        from observability.logger_factory import get_logger
-
         # Create a unique logger
         logger = get_logger("test.json.output.capture")
 

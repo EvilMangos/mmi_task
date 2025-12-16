@@ -7,14 +7,14 @@ from concurrent.futures import ThreadPoolExecutor
 
 import pytest
 
+from observability.counter import Counter
+
 
 class TestCounterBasic:
     """Tests for basic Counter functionality."""
 
     def test_counter_starts_at_zero(self) -> None:
         """A new counter starts with value zero."""
-        from observability.counter import Counter
-
         counter = Counter(name="test_counter", description="A test counter")
         samples = counter.collect()
 
@@ -23,8 +23,6 @@ class TestCounterBasic:
 
     def test_counter_inc_adds_value(self) -> None:
         """inc() adds the specified value to the counter."""
-        from observability.counter import Counter
-
         counter = Counter(name="test_counter", description="A test counter")
 
         counter.inc(5.0)
@@ -35,8 +33,6 @@ class TestCounterBasic:
 
     def test_counter_inc_default_one(self) -> None:
         """inc() with no arguments adds 1.0."""
-        from observability.counter import Counter
-
         counter = Counter(name="test_counter", description="A test counter")
 
         counter.inc()
@@ -52,8 +48,6 @@ class TestCounterWithLabels:
 
     def test_counter_inc_with_labels(self) -> None:
         """inc() with labels creates separate counters per label combination."""
-        from observability.counter import Counter
-
         counter = Counter(
             name="http_requests",
             description="HTTP request count",
@@ -82,8 +76,6 @@ class TestCounterWithLabels:
 
     def test_counter_collect_returns_all_label_combinations(self) -> None:
         """collect() returns samples for all observed label combinations."""
-        from observability.counter import Counter
-
         counter = Counter(
             name="events",
             description="Event count",
@@ -110,8 +102,6 @@ class TestCounterValidation:
 
     def test_counter_inc_negative_raises(self) -> None:
         """inc() with negative value raises ValueError."""
-        from observability.counter import Counter
-
         counter = Counter(name="test_counter", description="A test counter")
 
         with pytest.raises(ValueError, match="negative|positive|must be"):
@@ -123,8 +113,6 @@ class TestCounterThreadSafety:
 
     def test_counter_is_thread_safe(self) -> None:
         """Counter can be safely incremented from multiple threads."""
-        from observability.counter import Counter
-
         counter = Counter(name="concurrent_counter", description="Concurrent test")
         num_threads = 10
         increments_per_thread = 1000

@@ -2,14 +2,14 @@
 
 from __future__ import annotations
 
+from observability.exception_formatter import format_exception
+
 
 class TestFormatException:
     """Tests for format_exception function."""
 
     def test_format_exception_includes_type(self) -> None:
         """Formatted exception includes the exception type name."""
-        from observability.exception_formatter import format_exception
-
         try:
             raise ValueError("test error")
         except ValueError as exc:
@@ -20,8 +20,6 @@ class TestFormatException:
 
     def test_format_exception_includes_message(self) -> None:
         """Formatted exception includes the exception message."""
-        from observability.exception_formatter import format_exception
-
         try:
             raise RuntimeError("Something went wrong")
         except RuntimeError as exc:
@@ -32,8 +30,6 @@ class TestFormatException:
 
     def test_format_exception_includes_traceback(self) -> None:
         """Formatted exception includes the traceback string."""
-        from observability.exception_formatter import format_exception
-
         try:
             raise KeyError("missing_key")
         except KeyError as exc:
@@ -48,8 +44,6 @@ class TestFormatException:
 
     def test_format_exception_handles_chained(self) -> None:
         """Formatted exception includes info about chained exceptions."""
-        from observability.exception_formatter import format_exception
-
         try:
             try:
                 raise ValueError("original error")
@@ -73,8 +67,6 @@ class TestFormatExceptionEdgeCases:
 
     def test_format_exception_empty_message(self) -> None:
         """Exception with empty message is handled."""
-        from observability.exception_formatter import format_exception
-
         try:
             raise ValueError()
         except ValueError as exc:
@@ -85,7 +77,6 @@ class TestFormatExceptionEdgeCases:
 
     def test_format_exception_custom_exception(self) -> None:
         """Custom exception classes are handled correctly."""
-        from observability.exception_formatter import format_exception
 
         class CustomError(Exception):
             pass
@@ -100,8 +91,6 @@ class TestFormatExceptionEdgeCases:
 
     def test_format_exception_with_args(self) -> None:
         """Exception with multiple args is handled."""
-        from observability.exception_formatter import format_exception
-
         try:
             raise ValueError("arg1", "arg2", 42)
         except ValueError as exc:

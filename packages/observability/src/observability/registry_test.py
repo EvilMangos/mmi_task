@@ -4,15 +4,16 @@ from __future__ import annotations
 
 import pytest
 
+from observability.counter import Counter
+from observability.gauge import Gauge
+from observability.registry import MetricsRegistry
+
 
 class TestMetricsRegistryBasic:
     """Tests for basic registry operations."""
 
     def test_register_and_get(self) -> None:
         """Registered metric can be retrieved by name."""
-        from observability.counter import Counter
-        from observability.registry import MetricsRegistry
-
         registry = MetricsRegistry()
         counter = Counter(name="my_counter", description="Test counter")
 
@@ -23,8 +24,6 @@ class TestMetricsRegistryBasic:
 
     def test_get_returns_none_for_unknown(self) -> None:
         """get() returns None for unregistered metric names."""
-        from observability.registry import MetricsRegistry
-
         registry = MetricsRegistry()
         result = registry.get("unknown_metric")
 
@@ -36,9 +35,6 @@ class TestMetricsRegistryDuplicates:
 
     def test_register_duplicate_raises(self) -> None:
         """Registering a metric with an existing name raises an error."""
-        from observability.counter import Counter
-        from observability.registry import MetricsRegistry
-
         registry = MetricsRegistry()
         counter1 = Counter(name="duplicate", description="First counter")
         counter2 = Counter(name="duplicate", description="Second counter")
@@ -54,9 +50,6 @@ class TestMetricsRegistryUnregister:
 
     def test_unregister_removes(self) -> None:
         """unregister() removes a metric from the registry."""
-        from observability.counter import Counter
-        from observability.registry import MetricsRegistry
-
         registry = MetricsRegistry()
         counter = Counter(name="removable", description="To be removed")
 
@@ -68,8 +61,6 @@ class TestMetricsRegistryUnregister:
 
     def test_unregister_unknown_is_silent(self) -> None:
         """unregister() for unknown metric does not raise."""
-        from observability.registry import MetricsRegistry
-
         registry = MetricsRegistry()
 
         # Should not raise
@@ -81,10 +72,6 @@ class TestMetricsRegistryCollectAll:
 
     def test_collect_all_aggregates(self) -> None:
         """collect_all() returns samples from all registered metrics."""
-        from observability.counter import Counter
-        from observability.gauge import Gauge
-        from observability.registry import MetricsRegistry
-
         registry = MetricsRegistry()
 
         counter = Counter(name="requests_total", description="Total requests")
@@ -112,8 +99,6 @@ class TestMetricsRegistryCollectAll:
 
     def test_collect_all_empty_registry(self) -> None:
         """collect_all() returns empty dict for empty registry."""
-        from observability.registry import MetricsRegistry
-
         registry = MetricsRegistry()
         result = registry.collect_all()
 
