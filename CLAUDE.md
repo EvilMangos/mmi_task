@@ -61,10 +61,11 @@ pip install -U pip
 pip install -e "packages/config[dev]"
 pip install -e "packages/domain_orderbook[dev]"
 pip install -e "packages/domain_imbalance[dev]"
+pip install -e "packages/observability[dev]"
 pip install -e "packages/signal_engine[dev]"
+pip install -e "packages/testkit[dev]"
 pip install -e "packages/connector_binance[dev]"
 pip install -e "packages/notifier_telegram[dev]"
-pip install -e "packages/observability[dev]"
 pip install -e "apps/orderbook_watcher[dev]"
 ```
 
@@ -233,6 +234,39 @@ Use fakes/mocks for:
 * randomness (if any)
 
 Tests should be deterministic and cheap.
+
+### Testkit Utilities
+
+The `packages/testkit` package provides shared testing utilities:
+
+* `FakeClock` - injectable time source for deterministic cooldown tests
+* `FakeNotifier` - records notification calls for inspection
+* `orderbook_builder()` - fluent API for building test `OrderBookSnapshot` objects
+* `BinanceEvents` - generates synthetic Binance websocket events
+
+Example usage:
+
+```python
+from testkit import FakeClock, FakeNotifier, orderbook_builder
+
+# Build test orderbook data
+snapshot = (
+    orderbook_builder()
+    .with_symbol("BTCUSDT")
+    .with_bids([("45000.50", "1.5"), ("45000.00", "2.3")])
+    .with_asks([("45001.00", "1.8"), ("45001.50", "2.1")])
+    .build()
+)
+
+# Use fake clock for deterministic timing
+clock = FakeClock(datetime(2025, 1, 1, 12, 0, 0))
+clock.advance(seconds=30)
+
+# Use fake notifier to inspect sent notifications
+notifier = FakeNotifier()
+await notifier.notify(symbol="BTCUSDT", ratio=0.5, message="Alert!")
+assert notifier.was_notified("BTCUSDT")
+```
 
 ---
 
