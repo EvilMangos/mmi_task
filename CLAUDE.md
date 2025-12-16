@@ -244,16 +244,46 @@ Tests should be deterministic and cheap.
 The `packages/testkit` package provides shared testing utilities:
 
 * `FakeClock` - injectable time source for deterministic cooldown tests
-* `FakeNotifier` - records notification calls for inspection
+* `FakeNotifier` - records notification calls for inspection, with error simulation
 * `orderbook_builder()` - fluent API for building test `OrderBookSnapshot` objects
 * `BinanceEvents` - generates synthetic Binance websocket events
 
-Example usage:
+#### Pytest Fixtures
+
+The testkit package includes a `conftest.py` with ready-to-use pytest fixtures:
+
+* `fake_clock` - pre-configured `FakeClock` set to `datetime(2025, 1, 1, 12, 0, 0)`
+* `fake_notifier` - fresh `FakeNotifier` instance
+* `binance_events` - fresh `BinanceEvents` instance
+
+Shared constants are also available:
+
+* `DEFAULT_TEST_DATETIME` - `datetime(2025, 1, 1, 12, 0, 0)`
+* `DEFAULT_SYMBOL` - `"BTCUSDT"`
+
+Example using fixtures:
 
 ```python
-from testkit import FakeClock, FakeNotifier, orderbook_builder
+from testkit.conftest import DEFAULT_TEST_DATETIME, DEFAULT_SYMBOL
 
-# Build test orderbook data
+def test_clock_behavior(fake_clock):
+    assert fake_clock.now() == DEFAULT_TEST_DATETIME
+    fake_clock.advance(seconds=30)
+    # ...
+
+async def test_notification(fake_notifier):
+    await fake_notifier.notify(symbol=DEFAULT_SYMBOL, ratio=0.5, message="Alert!")
+    assert fake_notifier.was_notified(DEFAULT_SYMBOL)
+```
+
+#### OrderBook Builder
+
+The `orderbook_builder()` provides a fluent API with convenience methods for common test scenarios:
+
+```python
+from testkit import orderbook_builder
+
+# Explicit bid/ask levels
 snapshot = (
     orderbook_builder()
     .with_symbol("BTCUSDT")
@@ -262,14 +292,84 @@ snapshot = (
     .build()
 )
 
-# Use fake clock for deterministic timing
-clock = FakeClock(datetime(2025, 1, 1, 12, 0, 0))
-clock.advance(seconds=30)
+# Set both sides at once
+snapshot = orderbook_builder().with_levels(
+    bids=[("100.00", "5.0")],
+    asks=[("100.01", "5.0")]
+).build()
 
-# Use fake notifier to inspect sent notifications
+# Single-level shortcuts
+snapshot = orderbook_builder().with_single_bid("100.00", "10.0").with_single_ask("100.01", "5.0").build()
+
+# Target a specific imbalance ratio (auto-generates volumes)
+snapshot = orderbook_builder().with_imbalance_ratio(0.5).build()  # ratio = 0.5
+
+# Convenience presets
+snapshot = orderbook_builder().with_balanced_book().build()        # ratio = 0.0
+snapshot = orderbook_builder().with_high_bid_imbalance().build()   # ratio = 0.6 (default)
+snapshot = orderbook_builder().with_high_ask_imbalance().build()   # ratio = -0.6 (default)
+```
+
+#### FakeNotifier Capabilities
+
+`FakeNotifier` records calls and supports error simulation for testing error handling:
+
+```python
+from testkit import FakeNotifier
+
 notifier = FakeNotifier()
+
+# Basic usage
 await notifier.notify(symbol="BTCUSDT", ratio=0.5, message="Alert!")
 assert notifier.was_notified("BTCUSDT")
+assert notifier.call_count == 1
+assert notifier.last_call == ("BTCUSDT", 0.5, "Alert!")
+assert notifier.messages == ["Alert!"]
+
+# Filter calls by symbol
+btc_calls = notifier.get_calls_for_symbol("BTCUSDT")
+
+# Simulate errors
+notifier.set_error(ConnectionError("Network failure"))
+with pytest.raises(ConnectionError):
+    await notifier.notify(symbol="BTCUSDT", ratio=0.5, message="Test")
+notifier.clear_error()  # Remove error configuration
+
+# Reset state
+notifier.reset()
+```
+
+#### App/Package-Specific Fixtures
+
+Some apps and packages define their own `conftest.py` with specialized fixtures:
+
+**`apps/orderbook_watcher/conftest.py`**:
+* `fake_clock` - `FakeClock` starting at `2025-01-15 12:00:00 UTC`
+* `fake_notifier` - `FakeAlertNotifier` (uses `AlertPayload` protocol)
+
+**`packages/config/conftest.py`**:
+* `valid_env` - dictionary with all required environment variables
+* `make_valid_env()` - function returning a valid env dict
+* `patched_env(overrides, remove)` - context manager for isolated environment testing
+
+Example for config testing:
+
+```python
+from config.conftest import patched_env, make_valid_env
+
+# Test with valid environment
+with patched_env() as env:
+    settings = Settings(_env_file=None)
+
+# Test with custom overrides
+with patched_env(overrides={"LOG_LEVEL": "DEBUG"}):
+    settings = Settings(_env_file=None)
+    assert settings.logging.log_level == "DEBUG"
+
+# Test missing required variable
+with patched_env(remove=["TELEGRAM_BOT_TOKEN"]):
+    with pytest.raises(ValidationError):
+        Settings(_env_file=None)
 ```
 
 ---
