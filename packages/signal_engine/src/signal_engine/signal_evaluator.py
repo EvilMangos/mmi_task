@@ -1,8 +1,7 @@
 """SignalEvaluator class for determining when to trigger alerts."""
 
-from datetime import datetime
-
 from signal_engine.alert_decision import AlertDecision
+from signal_engine.clock import Clock
 from signal_engine.engine_config import EngineConfig
 from signal_engine.symbol_state import SymbolState
 
@@ -14,27 +13,29 @@ class SignalEvaluator:
     logic on a per-symbol basis.
     """
 
-    def __init__(self, config: EngineConfig) -> None:
+    def __init__(self, config: EngineConfig, clock: Clock) -> None:
         """Initialize the evaluator with the given configuration.
 
         Args:
             config: Configuration specifying threshold, cooldown, and hysteresis settings.
+            clock: Time source for cooldown calculations.
         """
         self._config = config
+        self._clock = clock
         self._states: dict[str, SymbolState] = {}
 
-    def evaluate(self, symbol: str, ratio: float, now: datetime) -> AlertDecision:
+    def evaluate(self, symbol: str, ratio: float) -> AlertDecision:
         """Evaluate whether an alert should be triggered for the given symbol and ratio.
 
         Args:
             symbol: The trading symbol (e.g., "BTCUSDT").
             ratio: The computed imbalance ratio.
-            now: The current timestamp.
 
         Returns:
             AlertDecision indicating whether to alert and why.
         """
-        # Step 1: Get or create symbol state
+        # Step 1: Get current time and symbol state
+        now = self._clock.now()
         if symbol not in self._states:
             self._states[symbol] = SymbolState(is_armed=True, last_alert_time=None)
 
