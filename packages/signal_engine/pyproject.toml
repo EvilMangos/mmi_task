@@ -8,6 +8,7 @@ version = "0.1.0"
 description = "Threshold rules + dedupe/cooldown + should alert?"
 requires-python = ">=3.11"
 dependencies = [
+    "contracts",
     "domain-imbalance",
 ]
 

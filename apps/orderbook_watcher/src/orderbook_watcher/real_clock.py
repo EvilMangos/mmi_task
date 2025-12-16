@@ -6,7 +6,7 @@ that returns actual system time in UTC.
 
 from datetime import datetime, timezone
 
-from signal_engine.clock import Clock
+from contracts import Clock
 
 
 class RealClock(Clock):

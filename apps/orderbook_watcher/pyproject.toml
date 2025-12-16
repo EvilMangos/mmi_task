@@ -8,6 +8,7 @@ version = "0.1.0"
 description = "Deployable service - the main runtime"
 requires-python = ">=3.11"
 dependencies = [
+    "contracts",
     "config",
     "domain-orderbook",
     "domain-imbalance",

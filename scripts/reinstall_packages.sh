@@ -17,6 +17,7 @@ echo "=================================="
 # List of packages in dependency order (dependencies first)
 # Note: Directory names use underscores, pip package names use hyphens
 PACKAGES=(
+    "contracts"
     "config"
     "domain_orderbook"
     "domain_imbalance"

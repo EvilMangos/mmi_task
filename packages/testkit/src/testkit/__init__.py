@@ -1,6 +1,6 @@
 """Fixtures, fakes (fake order books, fake clock, etc.)."""
 
-from signal_engine.clock import Clock
+from contracts import Clock
 
 from testkit.binance_events import BinanceEvents
 from testkit.fake_clock import FakeClock

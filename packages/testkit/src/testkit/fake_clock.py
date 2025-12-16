@@ -2,7 +2,7 @@
 
 from datetime import datetime, timedelta
 
-from signal_engine.clock import Clock
+from contracts import Clock
 
 
 class FakeClock(Clock):

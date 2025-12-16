@@ -58,6 +58,7 @@ Option B: install manually (example):
 
 ```bash
 pip install -U pip
+pip install -e "packages/contracts[dev]"
 pip install -e "packages/config[dev]"
 pip install -e "packages/domain_orderbook[dev]"
 pip install -e "packages/domain_imbalance[dev]"
@@ -133,21 +134,24 @@ crypto-orderbook-alerts/
 │   ├── lint_and_format.sh                 # run ruff format + ruff check
 │   └── reinstall_packages.sh              # uninstall and reinstall all local packages
 └── packages/
+    ├── contracts/                         # shared protocols (Clock) - interfaces only, no implementations
     ├── config/                            # typed settings (threshold X, symbols, telegram creds, etc.)
     ├── domain_orderbook/                  # pure orderbook types + "top N levels" helpers
     ├── domain_imbalance/                  # pure math: volume sums + imbalance ratio
-    ├── signal_engine/                     # threshold evaluation + cooldown/dedupe logic
+    ├── signal_engine/                     # threshold evaluation + cooldown/dedupe logic - uses Clock from contracts
     ├── connector_binance/                 # Binance websocket + snapshot sync; emits normalized snapshots
     ├── notifier_telegram/                 # Telegram Bot API client + message formatting
     ├── observability/                     # logging/metrics helpers
-    └── testkit/                           # optional shared fixtures/fakes (tests still live next to code)
+    └── testkit/                           # shared fixtures/fakes - uses Clock from contracts, types from domain_orderbook
 ```
 
 ### Boundary Rules (very important)
 
+* `contracts` defines **shared protocols only** (`Clock`). No implementations, no external dependencies.
 * `domain-*` packages are **pure**: no network calls, no environment reads, no time access.
 * `connector-binance` is the only package that knows Binance protocol details.
 * `notifier-telegram` is the only package that knows Telegram API details.
+* `testkit` depends on `contracts` (for Clock protocol) and `domain_orderbook` (for types).
 * `apps/orderbook-watcher` wires everything together and owns:
 
     * `asyncio` event loop
@@ -243,7 +247,7 @@ Tests should be deterministic and cheap.
 
 The `packages/testkit` package provides shared testing utilities:
 
-* `Clock` - protocol for time sources (re-exported from `signal_engine.clock`, the single source of truth)
+* `Clock` - protocol for time sources (from `contracts` package, the single source of truth)
 * `FakeClock` - injectable time source for deterministic cooldown tests
 * `FakeNotifier` - records notification calls for inspection, with error simulation
 * `orderbook_builder()` - fluent API for building test `OrderBookSnapshot` objects
