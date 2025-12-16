@@ -1,6 +1,6 @@
 """Binance connector settings."""
 
-from pydantic import BaseModel, field_validator
+from pydantic import BaseModel, ConfigDict, field_validator
 
 DEFAULT_BINANCE_WS_URL = "wss://stream.binance.com:9443/ws"
 DEFAULT_TOP_N_LEVELS = 10
@@ -9,7 +9,7 @@ MIN_TOP_N_LEVELS = 1
 MAX_TOP_N_LEVELS = 100
 
 
-class BinanceSettings(BaseModel, frozen=True):
+class BinanceSettings(BaseModel):
     """Settings for Binance WebSocket connection.
 
     Attributes:
@@ -17,6 +17,8 @@ class BinanceSettings(BaseModel, frozen=True):
         ws_url: Binance WebSocket URL.
         top_n_levels: Number of order book levels to consider for imbalance.
     """
+
+    model_config = ConfigDict(frozen=True)
 
     symbols: list[str]
     ws_url: str = DEFAULT_BINANCE_WS_URL

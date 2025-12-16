@@ -43,9 +43,9 @@ class TestNotifierProtocolDefinition:
 
     def test_notifier_is_protocol(self) -> None:
         """R1: Notifier is defined using typing.Protocol."""
-        from typing import Protocol
+        from typing_extensions import is_protocol
 
-        assert issubclass(Notifier, Protocol)
+        assert is_protocol(Notifier)
 
     def test_notifier_has_send_alert(self) -> None:
         """R2: Notifier protocol declares send_alert method."""
