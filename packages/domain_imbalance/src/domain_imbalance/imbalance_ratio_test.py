@@ -72,15 +72,15 @@ class TestImbalanceRatioBounds:
     @pytest.mark.parametrize(
         "bid_volume,ask_volume",
         [
-            (100.0, 0.0),      # all bid -> 1.0
-            (0.0, 100.0),      # all ask -> -1.0
-            (100.0, 100.0),    # equal -> 0.0
-            (99.0, 1.0),       # mostly bid -> near 1.0
-            (1.0, 99.0),       # mostly ask -> near -1.0
+            (100.0, 0.0),  # all bid -> 1.0
+            (0.0, 100.0),  # all ask -> -1.0
+            (100.0, 100.0),  # equal -> 0.0
+            (99.0, 1.0),  # mostly bid -> near 1.0
+            (1.0, 99.0),  # mostly ask -> near -1.0
             (1000000.0, 1.0),  # extreme bid dominance
             (1.0, 1000000.0),  # extreme ask dominance
-            (0.001, 0.001),    # tiny equal volumes
-            (0.0, 0.0),        # zero volumes
+            (0.001, 0.001),  # tiny equal volumes
+            (0.0, 0.0),  # zero volumes
         ],
     )
     def test_result_within_bounds(self, bid_volume: float, ask_volume: float) -> None:

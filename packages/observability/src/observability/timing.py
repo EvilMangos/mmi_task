@@ -43,7 +43,9 @@ class timed:
             RuntimeError: If accessed before the timed block has completed.
         """
         if self._elapsed_seconds is None:
-            raise RuntimeError("elapsed_seconds is not available until the timed block completes")
+            raise RuntimeError(
+                "elapsed_seconds is not available until the timed block completes"
+            )
         return self._elapsed_seconds
 
     def __enter__(self) -> "timed":

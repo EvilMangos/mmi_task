@@ -109,10 +109,14 @@ class TestGaugeWithLabels:
             s for s in samples if s.labels == {"location": "office", "unit": "celsius"}
         )
         office_fahrenheit = next(
-            s for s in samples if s.labels == {"location": "office", "unit": "fahrenheit"}
+            s
+            for s in samples
+            if s.labels == {"location": "office", "unit": "fahrenheit"}
         )
         warehouse_celsius = next(
-            s for s in samples if s.labels == {"location": "warehouse", "unit": "celsius"}
+            s
+            for s in samples
+            if s.labels == {"location": "warehouse", "unit": "celsius"}
         )
 
         assert office_celsius.value == 25.0

@@ -6,7 +6,7 @@ from unittest.mock import patch
 import pytest
 from pydantic import ValidationError
 
-from config.settings import Settings, load_settings
+from config.settings import Settings
 
 
 def make_valid_env() -> dict[str, str]:
@@ -26,7 +26,7 @@ class TestSettings:
         """Settings loads all required environment variables."""
         env = make_valid_env()
         with patch.dict(os.environ, env, clear=True):
-            settings = Settings()
+            settings = Settings(_env_file=None)
 
         assert settings.telegram is not None
         assert settings.telegram.bot_token == "123456:ABC-DEF"
@@ -36,7 +36,7 @@ class TestSettings:
         """Settings correctly parses and stores Binance settings."""
         env = make_valid_env()
         with patch.dict(os.environ, env, clear=True):
-            settings = Settings()
+            settings = Settings(_env_file=None)
 
         assert settings.binance is not None
         assert settings.binance.symbols == ["BTCUSDT", "DOTUSDT", "SOLUSDT"]
@@ -47,7 +47,7 @@ class TestSettings:
         """Settings correctly parses and stores alerting settings."""
         env = make_valid_env()
         with patch.dict(os.environ, env, clear=True):
-            settings = Settings()
+            settings = Settings(_env_file=None)
 
         assert settings.alerting is not None
         assert settings.alerting.imbalance_threshold == 0.35
@@ -57,7 +57,7 @@ class TestSettings:
         """Settings correctly parses and stores logging settings."""
         env = make_valid_env()
         with patch.dict(os.environ, env, clear=True):
-            settings = Settings()
+            settings = Settings(_env_file=None)
 
         assert settings.logging is not None
         assert settings.logging.log_level == "INFO"
@@ -76,7 +76,7 @@ class TestSettings:
             }
         )
         with patch.dict(os.environ, env, clear=True):
-            settings = Settings()
+            settings = Settings(_env_file=None)
 
         assert settings.binance is not None
         assert settings.binance.top_n_levels == 20
@@ -95,7 +95,7 @@ class TestSettings:
         del env["TELEGRAM_BOT_TOKEN"]
         with patch.dict(os.environ, env, clear=True):
             with pytest.raises(ValidationError) as exc_info:
-                Settings()
+                Settings(_env_file=None)
         assert "telegram_bot_token" in str(exc_info.value).lower()
 
     def test_missing_required_chat_id_raises_error(self) -> None:
@@ -104,7 +104,7 @@ class TestSettings:
         del env["TELEGRAM_CHAT_ID"]
         with patch.dict(os.environ, env, clear=True):
             with pytest.raises(ValidationError) as exc_info:
-                Settings()
+                Settings(_env_file=None)
         assert "telegram_chat_id" in str(exc_info.value).lower()
 
     def test_missing_required_symbols_raises_error(self) -> None:
@@ -113,7 +113,7 @@ class TestSettings:
         del env["SYMBOLS"]
         with patch.dict(os.environ, env, clear=True):
             with pytest.raises(ValidationError) as exc_info:
-                Settings()
+                Settings(_env_file=None)
         assert "symbols" in str(exc_info.value).lower()
 
     def test_missing_required_threshold_raises_error(self) -> None:
@@ -122,7 +122,7 @@ class TestSettings:
         del env["IMBALANCE_THRESHOLD"]
         with patch.dict(os.environ, env, clear=True):
             with pytest.raises(ValidationError) as exc_info:
-                Settings()
+                Settings(_env_file=None)
         assert "imbalance_threshold" in str(exc_info.value).lower()
 
     def test_invalid_threshold_value_raises_error(self) -> None:
@@ -131,7 +131,7 @@ class TestSettings:
         env["IMBALANCE_THRESHOLD"] = "1.5"  # Out of range
         with patch.dict(os.environ, env, clear=True):
             with pytest.raises(ValidationError) as exc_info:
-                Settings()
+                Settings(_env_file=None)
         assert "imbalance_threshold" in str(exc_info.value).lower()
 
     def test_invalid_top_n_levels_raises_error(self) -> None:
@@ -140,7 +140,7 @@ class TestSettings:
         env["TOP_N_LEVELS"] = "0"  # Below minimum
         with patch.dict(os.environ, env, clear=True):
             with pytest.raises(ValidationError) as exc_info:
-                Settings()
+                Settings(_env_file=None)
         assert "top_n_levels" in str(exc_info.value).lower()
 
     def test_invalid_ws_url_raises_error(self) -> None:
@@ -149,7 +149,7 @@ class TestSettings:
         env["BINANCE_WS_URL"] = "https://binance.com"
         with patch.dict(os.environ, env, clear=True):
             with pytest.raises(ValidationError) as exc_info:
-                Settings()
+                Settings(_env_file=None)
         assert "ws_url" in str(exc_info.value).lower()
 
     def test_negative_cooldown_raises_error(self) -> None:
@@ -158,7 +158,7 @@ class TestSettings:
         env["ALERT_COOLDOWN_SECONDS"] = "-10"
         with patch.dict(os.environ, env, clear=True):
             with pytest.raises(ValidationError) as exc_info:
-                Settings()
+                Settings(_env_file=None)
         assert "cooldown" in str(exc_info.value).lower()
 
     def test_negative_threshold_is_valid(self) -> None:
@@ -166,7 +166,7 @@ class TestSettings:
         env = make_valid_env()
         env["IMBALANCE_THRESHOLD"] = "-0.35"
         with patch.dict(os.environ, env, clear=True):
-            settings = Settings()
+            settings = Settings(_env_file=None)
 
         assert settings.alerting is not None
         assert settings.alerting.imbalance_threshold == -0.35
@@ -176,7 +176,7 @@ class TestSettings:
         env = make_valid_env()
         env["SYMBOLS"] = "btcusdt,dotusdt"
         with patch.dict(os.environ, env, clear=True):
-            settings = Settings()
+            settings = Settings(_env_file=None)
 
         assert settings.binance is not None
         assert settings.binance.symbols == ["BTCUSDT", "DOTUSDT"]
@@ -186,7 +186,7 @@ class TestSettings:
         env = make_valid_env()
         env["SYMBOLS"] = "BTCUSDT"
         with patch.dict(os.environ, env, clear=True):
-            settings = Settings()
+            settings = Settings(_env_file=None)
 
         assert settings.binance is not None
         assert settings.binance.symbols == ["BTCUSDT"]
@@ -197,7 +197,7 @@ class TestSettings:
         env["UNKNOWN_VAR"] = "should_be_ignored"
         env["ANOTHER_UNKNOWN"] = "also_ignored"
         with patch.dict(os.environ, env, clear=True):
-            settings = Settings()  # Should not raise
+            settings = Settings(_env_file=None)  # Should not raise
 
         assert settings.telegram is not None
         assert settings.binance is not None
@@ -210,23 +210,23 @@ class TestLoadSettings:
         """load_settings returns a Settings instance."""
         env = make_valid_env()
         with patch.dict(os.environ, env, clear=True):
-            settings = load_settings()
+            settings = Settings(_env_file=None)
 
         assert isinstance(settings, Settings)
 
     def test_each_call_creates_new_instance(self) -> None:
-        """load_settings creates a new instance each time (no caching)."""
+        """Settings() creates a new instance each time (no caching)."""
         env = make_valid_env()
         with patch.dict(os.environ, env, clear=True):
-            settings1 = load_settings()
-            settings2 = load_settings()
+            settings1 = Settings(_env_file=None)
+            settings2 = Settings(_env_file=None)
 
         assert settings1 is not settings2
 
     def test_propagates_validation_errors(self) -> None:
-        """load_settings propagates validation errors from Settings."""
+        """Settings propagates validation errors."""
         env = make_valid_env()
         del env["TELEGRAM_BOT_TOKEN"]
         with patch.dict(os.environ, env, clear=True):
             with pytest.raises(ValidationError):
-                load_settings()
+                Settings(_env_file=None)

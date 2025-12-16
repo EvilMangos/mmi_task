@@ -8,14 +8,14 @@ from decimal import Decimal
 
 import pytest
 
-from domain_orderbook.level import OrderBookLevel
 from domain_orderbook.helpers import (
-    normalize_bids,
     normalize_asks,
-    top_n_bids,
-    top_n_asks,
+    normalize_bids,
     sum_volume,
+    top_n_asks,
+    top_n_bids,
 )
+from domain_orderbook.level import OrderBookLevel
 
 
 def _make_level(price: str, qty: str) -> OrderBookLevel:

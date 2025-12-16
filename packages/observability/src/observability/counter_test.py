@@ -70,8 +70,12 @@ class TestCounterWithLabels:
         assert len(samples) == 2
 
         # Find samples by labels
-        get_200 = next(s for s in samples if s.labels == {"method": "GET", "status": "200"})
-        post_201 = next(s for s in samples if s.labels == {"method": "POST", "status": "201"})
+        get_200 = next(
+            s for s in samples if s.labels == {"method": "GET", "status": "200"}
+        )
+        post_201 = next(
+            s for s in samples if s.labels == {"method": "POST", "status": "201"}
+        )
 
         assert get_200.value == 2.0
         assert post_201.value == 1.0

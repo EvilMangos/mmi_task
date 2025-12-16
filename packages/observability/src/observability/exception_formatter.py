@@ -18,7 +18,9 @@ def format_exception(exc: BaseException) -> dict[str, Any]:
     """
     exc_type = type(exc).__name__
     exc_message = str(exc)
-    exc_traceback = "".join(traceback.format_exception(type(exc), exc, exc.__traceback__))
+    exc_traceback = "".join(
+        traceback.format_exception(type(exc), exc, exc.__traceback__)
+    )
 
     return {
         "type": exc_type,

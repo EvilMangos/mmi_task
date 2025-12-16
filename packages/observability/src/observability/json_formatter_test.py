@@ -125,7 +125,10 @@ class TestJsonFormatterFormat:
         # Extra fields should be in an 'extra' dict or at top level
         extra = parsed.get("extra", parsed)
         assert extra.get("user_id") == "user-123" or parsed.get("user_id") == "user-123"
-        assert extra.get("request_id") == "req-456" or parsed.get("request_id") == "req-456"
+        assert (
+            extra.get("request_id") == "req-456"
+            or parsed.get("request_id") == "req-456"
+        )
 
     def test_format_includes_exception_info(self) -> None:
         """When exc_info is present, exception details are included."""
@@ -155,7 +158,9 @@ class TestJsonFormatterFormat:
 
         # Should have exception info
         assert "exception" in parsed or "exc_info" in parsed or "traceback" in parsed
-        exc_data = parsed.get("exception") or parsed.get("exc_info") or parsed.get("traceback")
+        exc_data = (
+            parsed.get("exception") or parsed.get("exc_info") or parsed.get("traceback")
+        )
         assert exc_data is not None
 
     def test_format_timestamp_is_iso8601(self) -> None:

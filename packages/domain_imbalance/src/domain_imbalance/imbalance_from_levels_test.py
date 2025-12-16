@@ -18,7 +18,6 @@ import pytest
 
 from domain_imbalance.imbalance_from_levels import imbalance_from_levels
 
-
 # Type alias for clarity in tests
 Level = tuple[float, float]  # (price, quantity)
 

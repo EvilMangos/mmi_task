@@ -21,7 +21,9 @@ class TestGetLogger:
         assert isinstance(logger, logging.Logger)
         assert logger.name == "test.module"
 
-    def test_get_logger_respects_log_level_env(self, monkeypatch: pytest.MonkeyPatch) -> None:
+    def test_get_logger_respects_log_level_env(
+        self, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
         """Logger level is set based on LOG_LEVEL environment variable."""
         from observability.logger_factory import get_logger
 
@@ -30,7 +32,9 @@ class TestGetLogger:
         # Need a unique name to avoid cached logger
         logger = get_logger("test.env.debug")
 
-        assert logger.level == logging.DEBUG or logger.getEffectiveLevel() == logging.DEBUG
+        assert (
+            logger.level == logging.DEBUG or logger.getEffectiveLevel() == logging.DEBUG
+        )
 
     def test_get_logger_defaults_to_info(self, monkeypatch: pytest.MonkeyPatch) -> None:
         """When LOG_LEVEL is not set, logger defaults to INFO level."""
