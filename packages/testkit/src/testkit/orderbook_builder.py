@@ -111,6 +111,103 @@ class OrderBookBuilder:
         self._asks = (OrderBookLevel(price=Decimal(price), qty=Decimal(qty)),)
         return self
 
+    def with_imbalance_ratio(
+        self, ratio: float, total_volume: float = 10.0
+    ) -> "OrderBookBuilder":
+        """Configure bids and asks to achieve a target imbalance ratio.
+
+        Creates a single bid and single ask level with volumes calculated to
+        produce the exact specified ratio.
+
+        Formula: ratio = (bid_volume - ask_volume) / (bid_volume + ask_volume)
+
+        Args:
+            ratio: Target imbalance ratio in range [-1.0, 1.0].
+                   Positive = more bid volume, negative = more ask volume.
+            total_volume: Total volume (bid + ask). Defaults to 10.0.
+
+        Returns:
+            Self for chaining.
+
+        Raises:
+            ValueError: If ratio is outside [-1.0, 1.0] range.
+
+        Example:
+            # ratio = 0.5 means bid_vol=7.5, ask_vol=2.5 (with default total=10)
+            snapshot = orderbook_builder().with_imbalance_ratio(0.5).build()
+        """
+        if not -1.0 <= ratio <= 1.0:
+            raise ValueError(f"ratio must be between -1.0 and 1.0, got {ratio}")
+
+        # Derive bid and ask volumes from ratio and total_volume
+        # ratio = (B - A) / (B + A), where B + A = total_volume
+        # ratio * total = B - A
+        # B = (total + ratio * total) / 2 = total * (1 + ratio) / 2
+        # A = total - B = total * (1 - ratio) / 2
+        bid_volume = total_volume * (1 + ratio) / 2
+        ask_volume = total_volume * (1 - ratio) / 2
+
+        self._bids = (
+            OrderBookLevel(price=Decimal("100.00"), qty=Decimal(str(bid_volume))),
+        )
+        self._asks = (
+            OrderBookLevel(price=Decimal("100.01"), qty=Decimal(str(ask_volume))),
+        )
+        return self
+
+    def with_balanced_book(self, volume_per_side: float = 5.0) -> "OrderBookBuilder":
+        """Configure a balanced orderbook with ratio = 0.0.
+
+        Args:
+            volume_per_side: Volume for both bid and ask sides. Defaults to 5.0.
+
+        Returns:
+            Self for chaining.
+        """
+        return self.with_imbalance_ratio(0.0, total_volume=volume_per_side * 2)
+
+    def with_high_bid_imbalance(
+        self, ratio: float = 0.6, total_volume: float = 10.0
+    ) -> "OrderBookBuilder":
+        """Configure a snapshot with high bid-side imbalance (ratio > 0).
+
+        Convenience method for tests that need an imbalance above typical thresholds.
+
+        Args:
+            ratio: Target ratio, must be positive. Defaults to 0.6.
+            total_volume: Total volume. Defaults to 10.0.
+
+        Returns:
+            Self for chaining.
+
+        Raises:
+            ValueError: If ratio is not positive.
+        """
+        if ratio <= 0:
+            raise ValueError(f"ratio must be positive for bid imbalance, got {ratio}")
+        return self.with_imbalance_ratio(ratio, total_volume)
+
+    def with_high_ask_imbalance(
+        self, ratio: float = -0.6, total_volume: float = 10.0
+    ) -> "OrderBookBuilder":
+        """Configure a snapshot with high ask-side imbalance (ratio < 0).
+
+        Convenience method for tests that need a negative imbalance.
+
+        Args:
+            ratio: Target ratio, must be negative. Defaults to -0.6.
+            total_volume: Total volume. Defaults to 10.0.
+
+        Returns:
+            Self for chaining.
+
+        Raises:
+            ValueError: If ratio is not negative.
+        """
+        if ratio >= 0:
+            raise ValueError(f"ratio must be negative for ask imbalance, got {ratio}")
+        return self.with_imbalance_ratio(ratio, total_volume)
+
     def build(self) -> OrderBookSnapshot:
         """Build the OrderBookSnapshot.
 

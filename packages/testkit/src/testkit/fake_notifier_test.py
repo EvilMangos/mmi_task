@@ -31,95 +31,80 @@ class TestFakeNotifierNotify:
     """Test the notify method and state recording."""
 
     @pytest.mark.asyncio
-    async def test_notify_records_single_call(self):
-        notifier = FakeNotifier()
+    async def test_notify_records_single_call(self, fake_notifier: FakeNotifier):
+        await fake_notifier.notify(symbol="BTCUSDT", ratio=0.5, message="Test alert")
 
-        await notifier.notify(symbol="BTCUSDT", ratio=0.5, message="Test alert")
-
-        assert notifier.call_count == 1
-        assert notifier.last_message == "Test alert"
-        assert notifier.last_call == ("BTCUSDT", 0.5, "Test alert")
-        assert notifier.messages == ["Test alert"]
-        assert notifier.calls == [("BTCUSDT", 0.5, "Test alert")]
+        assert fake_notifier.call_count == 1
+        assert fake_notifier.last_message == "Test alert"
+        assert fake_notifier.last_call == ("BTCUSDT", 0.5, "Test alert")
+        assert fake_notifier.messages == ["Test alert"]
+        assert fake_notifier.calls == [("BTCUSDT", 0.5, "Test alert")]
 
     @pytest.mark.asyncio
-    async def test_notify_records_multiple_calls(self):
-        notifier = FakeNotifier()
+    async def test_notify_records_multiple_calls(self, fake_notifier: FakeNotifier):
+        await fake_notifier.notify(symbol="BTCUSDT", ratio=0.5, message="Alert 1")
+        await fake_notifier.notify(symbol="DOTUSDT", ratio=0.3, message="Alert 2")
+        await fake_notifier.notify(symbol="SOLUSDT", ratio=0.7, message="Alert 3")
 
-        await notifier.notify(symbol="BTCUSDT", ratio=0.5, message="Alert 1")
-        await notifier.notify(symbol="DOTUSDT", ratio=0.3, message="Alert 2")
-        await notifier.notify(symbol="SOLUSDT", ratio=0.7, message="Alert 3")
-
-        assert notifier.call_count == 3
-        assert notifier.last_message == "Alert 3"
-        assert notifier.last_call == ("SOLUSDT", 0.7, "Alert 3")
-        assert notifier.messages == ["Alert 1", "Alert 2", "Alert 3"]
-        assert notifier.calls == [
+        assert fake_notifier.call_count == 3
+        assert fake_notifier.last_message == "Alert 3"
+        assert fake_notifier.last_call == ("SOLUSDT", 0.7, "Alert 3")
+        assert fake_notifier.messages == ["Alert 1", "Alert 2", "Alert 3"]
+        assert fake_notifier.calls == [
             ("BTCUSDT", 0.5, "Alert 1"),
             ("DOTUSDT", 0.3, "Alert 2"),
             ("SOLUSDT", 0.7, "Alert 3"),
         ]
 
     @pytest.mark.asyncio
-    async def test_notify_with_negative_ratio(self):
-        notifier = FakeNotifier()
-
-        await notifier.notify(
+    async def test_notify_with_negative_ratio(self, fake_notifier: FakeNotifier):
+        await fake_notifier.notify(
             symbol="BTCUSDT", ratio=-0.3, message="Negative imbalance"
         )
 
-        assert notifier.call_count == 1
-        assert notifier.last_call == ("BTCUSDT", -0.3, "Negative imbalance")
+        assert fake_notifier.call_count == 1
+        assert fake_notifier.last_call == ("BTCUSDT", -0.3, "Negative imbalance")
 
     @pytest.mark.asyncio
-    async def test_notify_with_zero_ratio(self):
-        notifier = FakeNotifier()
+    async def test_notify_with_zero_ratio(self, fake_notifier: FakeNotifier):
+        await fake_notifier.notify(symbol="BTCUSDT", ratio=0.0, message="Balanced")
 
-        await notifier.notify(symbol="BTCUSDT", ratio=0.0, message="Balanced")
-
-        assert notifier.call_count == 1
-        assert notifier.last_call == ("BTCUSDT", 0.0, "Balanced")
+        assert fake_notifier.call_count == 1
+        assert fake_notifier.last_call == ("BTCUSDT", 0.0, "Balanced")
 
     @pytest.mark.asyncio
-    async def test_notify_with_extreme_ratio(self):
-        notifier = FakeNotifier()
+    async def test_notify_with_extreme_ratio(self, fake_notifier: FakeNotifier):
+        await fake_notifier.notify(symbol="BTCUSDT", ratio=1.0, message="All bids")
 
-        await notifier.notify(symbol="BTCUSDT", ratio=1.0, message="All bids")
-
-        assert notifier.call_count == 1
-        assert notifier.last_call == ("BTCUSDT", 1.0, "All bids")
+        assert fake_notifier.call_count == 1
+        assert fake_notifier.last_call == ("BTCUSDT", 1.0, "All bids")
 
     @pytest.mark.asyncio
-    async def test_notify_with_empty_message(self):
-        notifier = FakeNotifier()
+    async def test_notify_with_empty_message(self, fake_notifier: FakeNotifier):
+        await fake_notifier.notify(symbol="BTCUSDT", ratio=0.5, message="")
 
-        await notifier.notify(symbol="BTCUSDT", ratio=0.5, message="")
-
-        assert notifier.call_count == 1
-        assert notifier.last_message == ""
-        assert notifier.messages == [""]
+        assert fake_notifier.call_count == 1
+        assert fake_notifier.last_message == ""
+        assert fake_notifier.messages == [""]
 
     @pytest.mark.asyncio
-    async def test_notify_with_multiline_message(self):
-        notifier = FakeNotifier()
+    async def test_notify_with_multiline_message(self, fake_notifier: FakeNotifier):
         message = "Line 1\nLine 2\nLine 3"
 
-        await notifier.notify(symbol="BTCUSDT", ratio=0.5, message=message)
+        await fake_notifier.notify(symbol="BTCUSDT", ratio=0.5, message=message)
 
-        assert notifier.last_message == message
-        assert notifier.messages == [message]
+        assert fake_notifier.last_message == message
+        assert fake_notifier.messages == [message]
 
     @pytest.mark.asyncio
-    async def test_notify_preserves_call_order(self):
-        notifier = FakeNotifier()
+    async def test_notify_preserves_call_order(self, fake_notifier: FakeNotifier):
+        await fake_notifier.notify(symbol="A", ratio=0.1, message="First")
+        await fake_notifier.notify(symbol="B", ratio=0.2, message="Second")
+        await fake_notifier.notify(symbol="C", ratio=0.3, message="Third")
+        await fake_notifier.notify(symbol="D", ratio=0.4, message="Fourth")
 
-        await notifier.notify(symbol="A", ratio=0.1, message="First")
-        await notifier.notify(symbol="B", ratio=0.2, message="Second")
-        await notifier.notify(symbol="C", ratio=0.3, message="Third")
-        await notifier.notify(symbol="D", ratio=0.4, message="Fourth")
-
-        assert [call[0] for call in notifier.calls] == ["A", "B", "C", "D"]
-        assert [call[2] for call in notifier.calls] == [
+        assert [call[0] for call in fake_notifier.calls] == ["A", "B", "C", "D"]
+        assert [call[2] for call in fake_notifier.calls] == [
             "First",
             "Second",
             "Third",
@@ -360,7 +345,7 @@ class TestFakeNotifierEdgeCases:
         assert len(notifier.messages) == 1000
 
     @pytest.mark.asyncio
-    async def test_get_calls_for_symbol_with_many_calls(self):
+    async def test_get_calls_for_symbol_with_many_calls(self) -> None:
         notifier = FakeNotifier()
 
         for i in range(100):
@@ -370,3 +355,64 @@ class TestFakeNotifierEdgeCases:
 
         assert len(calls) == 100
         assert all(call[0] == "BTCUSDT" for call in calls)
+
+
+class TestFakeNotifierErrorSimulation:
+    """Test error simulation capabilities."""
+
+    @pytest.mark.asyncio
+    async def test_set_error_raises_on_notify(self) -> None:
+        notifier = FakeNotifier()
+        notifier.set_error(ValueError("Test error"))
+
+        with pytest.raises(ValueError, match="Test error"):
+            await notifier.notify(symbol="BTCUSDT", ratio=0.5, message="Alert")
+
+        # Call was still recorded before error
+        assert notifier.call_count == 1
+
+    @pytest.mark.asyncio
+    async def test_set_error_raises_on_each_notify(self) -> None:
+        notifier = FakeNotifier()
+        notifier.set_error(RuntimeError("Persistent error"))
+
+        with pytest.raises(RuntimeError):
+            await notifier.notify(symbol="BTCUSDT", ratio=0.5, message="Alert 1")
+
+        with pytest.raises(RuntimeError):
+            await notifier.notify(symbol="BTCUSDT", ratio=0.5, message="Alert 2")
+
+        assert notifier.call_count == 2
+
+    @pytest.mark.asyncio
+    async def test_clear_error_removes_configured_error(self) -> None:
+        notifier = FakeNotifier()
+        notifier.set_error(ValueError("Error"))
+        notifier.clear_error()
+
+        # Should not raise
+        await notifier.notify(symbol="BTCUSDT", ratio=0.5, message="Alert")
+        assert notifier.call_count == 1
+
+    @pytest.mark.asyncio
+    async def test_reset_clears_error(self) -> None:
+        notifier = FakeNotifier()
+        notifier.set_error(ValueError("Error"))
+
+        with pytest.raises(ValueError):
+            await notifier.notify(symbol="BTCUSDT", ratio=0.5, message="Alert")
+
+        notifier.reset()
+
+        # Should not raise after reset
+        await notifier.notify(symbol="BTCUSDT", ratio=0.5, message="Alert after reset")
+        assert notifier.call_count == 1
+        assert notifier.last_message == "Alert after reset"
+
+    @pytest.mark.asyncio
+    async def test_no_error_by_default(self) -> None:
+        notifier = FakeNotifier()
+
+        # Should not raise
+        await notifier.notify(symbol="BTCUSDT", ratio=0.5, message="Alert")
+        assert notifier.call_count == 1

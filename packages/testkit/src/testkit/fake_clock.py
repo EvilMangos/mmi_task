@@ -2,8 +2,10 @@
 
 from datetime import datetime, timedelta
 
+from signal_engine.clock import Clock
 
-class FakeClock:
+
+class FakeClock(Clock):
     """A deterministic time source for testing.
 
     Allows advancing time manually and resetting to initial state.

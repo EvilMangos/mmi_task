@@ -560,7 +560,7 @@ class TestOrderBookBuilderEdgeCases:
         assert snapshot.bids[0].price == Decimal("100.10")
         assert snapshot.bids[0].qty == Decimal("10.01")
 
-    def test_function_returns_new_builder_each_time(self):
+    def test_function_returns_new_builder_each_time(self) -> None:
         builder1 = orderbook_builder()
         builder2 = orderbook_builder()
 
@@ -570,3 +570,183 @@ class TestOrderBookBuilderEdgeCases:
 
         # builder2 should still have default symbol (unaffected by builder1 modification)
         assert snapshot2.symbol == "BTCUSDT"
+
+
+class TestOrderBookBuilderWithImbalanceRatio:
+    """Test imbalance ratio convenience methods."""
+
+    def test_with_imbalance_ratio_zero_creates_balanced_book(self) -> None:
+        snapshot = orderbook_builder().with_imbalance_ratio(0.0).build()
+
+        bid_vol = float(snapshot.bids[0].qty)
+        ask_vol = float(snapshot.asks[0].qty)
+
+        assert bid_vol == ask_vol
+        assert bid_vol == 5.0  # Default total is 10, so each side gets 5
+
+    def test_with_imbalance_ratio_positive_more_bid_volume(self) -> None:
+        snapshot = orderbook_builder().with_imbalance_ratio(0.5).build()
+
+        bid_vol = float(snapshot.bids[0].qty)
+        ask_vol = float(snapshot.asks[0].qty)
+
+        # ratio = 0.5, total = 10
+        # bid = 10 * (1 + 0.5) / 2 = 7.5
+        # ask = 10 * (1 - 0.5) / 2 = 2.5
+        assert bid_vol == 7.5
+        assert ask_vol == 2.5
+
+        # Verify ratio calculation
+        actual_ratio = (bid_vol - ask_vol) / (bid_vol + ask_vol)
+        assert actual_ratio == pytest.approx(0.5)
+
+    def test_with_imbalance_ratio_negative_more_ask_volume(self) -> None:
+        snapshot = orderbook_builder().with_imbalance_ratio(-0.5).build()
+
+        bid_vol = float(snapshot.bids[0].qty)
+        ask_vol = float(snapshot.asks[0].qty)
+
+        assert bid_vol == 2.5
+        assert ask_vol == 7.5
+
+        actual_ratio = (bid_vol - ask_vol) / (bid_vol + ask_vol)
+        assert actual_ratio == pytest.approx(-0.5)
+
+    def test_with_imbalance_ratio_extreme_positive(self) -> None:
+        snapshot = orderbook_builder().with_imbalance_ratio(1.0).build()
+
+        bid_vol = float(snapshot.bids[0].qty)
+        ask_vol = float(snapshot.asks[0].qty)
+
+        assert bid_vol == 10.0
+        assert ask_vol == 0.0
+
+    def test_with_imbalance_ratio_extreme_negative(self) -> None:
+        snapshot = orderbook_builder().with_imbalance_ratio(-1.0).build()
+
+        bid_vol = float(snapshot.bids[0].qty)
+        ask_vol = float(snapshot.asks[0].qty)
+
+        assert bid_vol == 0.0
+        assert ask_vol == 10.0
+
+    def test_with_imbalance_ratio_custom_total_volume(self) -> None:
+        snapshot = (
+            orderbook_builder().with_imbalance_ratio(0.6, total_volume=20.0).build()
+        )
+
+        bid_vol = float(snapshot.bids[0].qty)
+        ask_vol = float(snapshot.asks[0].qty)
+
+        # bid = 20 * (1 + 0.6) / 2 = 16
+        # ask = 20 * (1 - 0.6) / 2 = 4
+        assert bid_vol == 16.0
+        assert ask_vol == 4.0
+        assert bid_vol + ask_vol == 20.0
+
+    def test_with_imbalance_ratio_out_of_range_raises_error(self) -> None:
+        with pytest.raises(ValueError, match="ratio must be between -1.0 and 1.0"):
+            orderbook_builder().with_imbalance_ratio(1.5)
+
+        with pytest.raises(ValueError, match="ratio must be between -1.0 and 1.0"):
+            orderbook_builder().with_imbalance_ratio(-1.5)
+
+    def test_with_imbalance_ratio_sets_default_prices(self) -> None:
+        snapshot = orderbook_builder().with_imbalance_ratio(0.5).build()
+
+        assert snapshot.bids[0].price == Decimal("100.00")
+        assert snapshot.asks[0].price == Decimal("100.01")
+
+    def test_with_imbalance_ratio_can_chain_with_symbol(self) -> None:
+        snapshot = (
+            orderbook_builder()
+            .with_symbol("ETHUSDT")
+            .with_imbalance_ratio(0.4)
+            .with_timestamp(1234567890.0)
+            .build()
+        )
+
+        assert snapshot.symbol == "ETHUSDT"
+        assert snapshot.timestamp == 1234567890.0
+        assert len(snapshot.bids) == 1
+        assert len(snapshot.asks) == 1
+
+
+class TestOrderBookBuilderWithBalancedBook:
+    """Test balanced book convenience method."""
+
+    def test_with_balanced_book_creates_zero_ratio(self) -> None:
+        snapshot = orderbook_builder().with_balanced_book().build()
+
+        bid_vol = float(snapshot.bids[0].qty)
+        ask_vol = float(snapshot.asks[0].qty)
+
+        assert bid_vol == ask_vol == 5.0
+
+    def test_with_balanced_book_custom_volume(self) -> None:
+        snapshot = orderbook_builder().with_balanced_book(volume_per_side=10.0).build()
+
+        bid_vol = float(snapshot.bids[0].qty)
+        ask_vol = float(snapshot.asks[0].qty)
+
+        assert bid_vol == ask_vol == 10.0
+
+
+class TestOrderBookBuilderWithHighBidImbalance:
+    """Test high bid imbalance convenience method."""
+
+    def test_with_high_bid_imbalance_default_ratio(self) -> None:
+        snapshot = orderbook_builder().with_high_bid_imbalance().build()
+
+        bid_vol = float(snapshot.bids[0].qty)
+        ask_vol = float(snapshot.asks[0].qty)
+
+        actual_ratio = (bid_vol - ask_vol) / (bid_vol + ask_vol)
+        assert actual_ratio == pytest.approx(0.6)
+
+    def test_with_high_bid_imbalance_custom_ratio(self) -> None:
+        snapshot = orderbook_builder().with_high_bid_imbalance(ratio=0.8).build()
+
+        bid_vol = float(snapshot.bids[0].qty)
+        ask_vol = float(snapshot.asks[0].qty)
+
+        actual_ratio = (bid_vol - ask_vol) / (bid_vol + ask_vol)
+        assert actual_ratio == pytest.approx(0.8)
+
+    def test_with_high_bid_imbalance_zero_ratio_raises_error(self) -> None:
+        with pytest.raises(ValueError, match="ratio must be positive"):
+            orderbook_builder().with_high_bid_imbalance(ratio=0.0)
+
+    def test_with_high_bid_imbalance_negative_ratio_raises_error(self) -> None:
+        with pytest.raises(ValueError, match="ratio must be positive"):
+            orderbook_builder().with_high_bid_imbalance(ratio=-0.5)
+
+
+class TestOrderBookBuilderWithHighAskImbalance:
+    """Test high ask imbalance convenience method."""
+
+    def test_with_high_ask_imbalance_default_ratio(self) -> None:
+        snapshot = orderbook_builder().with_high_ask_imbalance().build()
+
+        bid_vol = float(snapshot.bids[0].qty)
+        ask_vol = float(snapshot.asks[0].qty)
+
+        actual_ratio = (bid_vol - ask_vol) / (bid_vol + ask_vol)
+        assert actual_ratio == pytest.approx(-0.6)
+
+    def test_with_high_ask_imbalance_custom_ratio(self) -> None:
+        snapshot = orderbook_builder().with_high_ask_imbalance(ratio=-0.8).build()
+
+        bid_vol = float(snapshot.bids[0].qty)
+        ask_vol = float(snapshot.asks[0].qty)
+
+        actual_ratio = (bid_vol - ask_vol) / (bid_vol + ask_vol)
+        assert actual_ratio == pytest.approx(-0.8)
+
+    def test_with_high_ask_imbalance_zero_ratio_raises_error(self) -> None:
+        with pytest.raises(ValueError, match="ratio must be negative"):
+            orderbook_builder().with_high_ask_imbalance(ratio=0.0)
+
+    def test_with_high_ask_imbalance_positive_ratio_raises_error(self) -> None:
+        with pytest.raises(ValueError, match="ratio must be negative"):
+            orderbook_builder().with_high_ask_imbalance(ratio=0.5)

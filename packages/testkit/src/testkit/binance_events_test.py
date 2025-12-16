@@ -21,10 +21,8 @@ class TestBinanceEventsInitialization:
 class TestBinanceEventsDepthUpdate:
     """Test depth update event generation."""
 
-    def test_depth_update_basic_structure(self):
-        events = BinanceEvents()
-
-        event = events.depth_update(
+    def test_depth_update_basic_structure(self, binance_events: BinanceEvents):
+        event = binance_events.depth_update(
             symbol="BTCUSDT", bids=[("100", "10")], asks=[("101", "11")]
         )
 
@@ -35,61 +33,51 @@ class TestBinanceEventsDepthUpdate:
         assert "a" in event
         assert "E" in event
 
-    def test_depth_update_event_type(self):
-        events = BinanceEvents()
-
-        event = events.depth_update(symbol="BTCUSDT", bids=[], asks=[])
+    def test_depth_update_event_type(self, binance_events: BinanceEvents):
+        event = binance_events.depth_update(symbol="BTCUSDT", bids=[], asks=[])
 
         assert event["e"] == "depthUpdate"
 
-    def test_depth_update_symbol(self):
-        events = BinanceEvents()
-
-        event = events.depth_update(
+    def test_depth_update_symbol(self, binance_events: BinanceEvents):
+        event = binance_events.depth_update(
             symbol="BTCUSDT", bids=[("100", "10")], asks=[("101", "11")]
         )
 
         assert event["s"] == "BTCUSDT"
 
-    def test_depth_update_with_different_symbols(self):
-        events = BinanceEvents()
-
-        event1 = events.depth_update(symbol="BTCUSDT", bids=[], asks=[])
-        event2 = events.depth_update(symbol="DOTUSDT", bids=[], asks=[])
-        event3 = events.depth_update(symbol="SOLUSDT", bids=[], asks=[])
+    def test_depth_update_with_different_symbols(self, binance_events: BinanceEvents):
+        event1 = binance_events.depth_update(symbol="BTCUSDT", bids=[], asks=[])
+        event2 = binance_events.depth_update(symbol="DOTUSDT", bids=[], asks=[])
+        event3 = binance_events.depth_update(symbol="SOLUSDT", bids=[], asks=[])
 
         assert event1["s"] == "BTCUSDT"
         assert event2["s"] == "DOTUSDT"
         assert event3["s"] == "SOLUSDT"
 
-    def test_depth_update_empty_bids_and_asks(self):
-        events = BinanceEvents()
-
-        event = events.depth_update(symbol="BTCUSDT", bids=[], asks=[])
+    def test_depth_update_empty_bids_and_asks(self, binance_events: BinanceEvents):
+        event = binance_events.depth_update(symbol="BTCUSDT", bids=[], asks=[])
 
         assert event["b"] == []
         assert event["a"] == []
 
-    def test_depth_update_single_bid(self):
-        events = BinanceEvents()
-
-        event = events.depth_update(symbol="BTCUSDT", bids=[("100.5", "10.0")], asks=[])
+    def test_depth_update_single_bid(self, binance_events: BinanceEvents):
+        event = binance_events.depth_update(
+            symbol="BTCUSDT", bids=[("100.5", "10.0")], asks=[]
+        )
 
         assert len(event["b"]) == 1
         assert event["b"][0] == ["100.5", "10.0"]
 
-    def test_depth_update_single_ask(self):
-        events = BinanceEvents()
-
-        event = events.depth_update(symbol="BTCUSDT", bids=[], asks=[("101.5", "11.0")])
+    def test_depth_update_single_ask(self, binance_events: BinanceEvents):
+        event = binance_events.depth_update(
+            symbol="BTCUSDT", bids=[], asks=[("101.5", "11.0")]
+        )
 
         assert len(event["a"]) == 1
         assert event["a"][0] == ["101.5", "11.0"]
 
-    def test_depth_update_multiple_bids(self):
-        events = BinanceEvents()
-
-        event = events.depth_update(
+    def test_depth_update_multiple_bids(self, binance_events: BinanceEvents):
+        event = binance_events.depth_update(
             symbol="BTCUSDT",
             bids=[("100", "10"), ("99", "20"), ("98", "30")],
             asks=[],
@@ -100,10 +88,8 @@ class TestBinanceEventsDepthUpdate:
         assert event["b"][1] == ["99", "20"]
         assert event["b"][2] == ["98", "30"]
 
-    def test_depth_update_multiple_asks(self):
-        events = BinanceEvents()
-
-        event = events.depth_update(
+    def test_depth_update_multiple_asks(self, binance_events: BinanceEvents):
+        event = binance_events.depth_update(
             symbol="BTCUSDT",
             bids=[],
             asks=[("101", "11"), ("102", "22"), ("103", "33")],
@@ -114,10 +100,8 @@ class TestBinanceEventsDepthUpdate:
         assert event["a"][1] == ["102", "22"]
         assert event["a"][2] == ["103", "33"]
 
-    def test_depth_update_bids_and_asks_together(self):
-        events = BinanceEvents()
-
-        event = events.depth_update(
+    def test_depth_update_bids_and_asks_together(self, binance_events: BinanceEvents):
+        event = binance_events.depth_update(
             symbol="BTCUSDT", bids=[("100", "10")], asks=[("101", "11")]
         )
 
@@ -126,29 +110,23 @@ class TestBinanceEventsDepthUpdate:
         assert event["b"][0] == ["100", "10"]
         assert event["a"][0] == ["101", "11"]
 
-    def test_depth_update_has_timestamp(self):
-        events = BinanceEvents()
-
-        event = events.depth_update(symbol="BTCUSDT", bids=[], asks=[])
+    def test_depth_update_has_timestamp(self, binance_events: BinanceEvents):
+        event = binance_events.depth_update(symbol="BTCUSDT", bids=[], asks=[])
 
         assert "E" in event
         assert isinstance(event["E"], int)
         assert event["E"] > 0
 
-    def test_depth_update_timestamps_increase(self):
-        events = BinanceEvents()
-
-        event1 = events.depth_update(symbol="BTCUSDT", bids=[], asks=[])
-        event2 = events.depth_update(symbol="BTCUSDT", bids=[], asks=[])
-        event3 = events.depth_update(symbol="BTCUSDT", bids=[], asks=[])
+    def test_depth_update_timestamps_increase(self, binance_events: BinanceEvents):
+        event1 = binance_events.depth_update(symbol="BTCUSDT", bids=[], asks=[])
+        event2 = binance_events.depth_update(symbol="BTCUSDT", bids=[], asks=[])
+        event3 = binance_events.depth_update(symbol="BTCUSDT", bids=[], asks=[])
 
         assert event2["E"] > event1["E"]
         assert event3["E"] > event2["E"]
 
-    def test_depth_update_preserves_string_format(self):
-        events = BinanceEvents()
-
-        event = events.depth_update(
+    def test_depth_update_preserves_string_format(self, binance_events: BinanceEvents):
+        event = binance_events.depth_update(
             symbol="BTCUSDT",
             bids=[("100.123456", "10.987654")],
             asks=[("101.654321", "11.123456")],
@@ -161,19 +139,15 @@ class TestBinanceEventsDepthUpdate:
         assert event["b"][0][0] == "100.123456"
         assert event["b"][0][1] == "10.987654"
 
-    def test_depth_update_with_custom_timestamp(self):
-        events = BinanceEvents()
-
-        event = events.depth_update(
+    def test_depth_update_with_custom_timestamp(self, binance_events: BinanceEvents):
+        event = binance_events.depth_update(
             symbol="BTCUSDT", bids=[], asks=[], timestamp=1234567890
         )
 
         assert event["E"] == 1234567890
 
-    def test_depth_update_protocol_fields(self):
-        events = BinanceEvents()
-
-        event = events.depth_update(
+    def test_depth_update_protocol_fields(self, binance_events: BinanceEvents):
+        event = binance_events.depth_update(
             symbol="BTCUSDT", bids=[("100", "10")], asks=[("101", "11")]
         )
 
