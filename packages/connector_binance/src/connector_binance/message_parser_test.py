@@ -27,107 +27,85 @@ from connector_binance.exceptions import ParseError
 from connector_binance.message_parser import parse_depth_message
 
 # =============================================================================
-# Fixtures - Sample Binance Messages
+# Fixtures - Sample Binance Messages (using BinanceMessageBuilder)
 # =============================================================================
 
 
 @pytest.fixture
-def single_stream_message() -> dict:
+def single_stream_message(binance_message_builder) -> dict:
     """Single stream partial depth message from Binance."""
-    return {
-        "lastUpdateId": 160,
-        "bids": [
-            ["0.0024", "10"],
-            ["0.0023", "20"],
-        ],
-        "asks": [
-            ["0.0026", "100"],
-            ["0.0027", "50"],
-        ],
-    }
+    return (
+        binance_message_builder()
+        .with_last_update_id(160)
+        .with_bids([("0.0024", "10"), ("0.0023", "20")])
+        .with_asks([("0.0026", "100"), ("0.0027", "50")])
+        .build_single_stream()
+    )
 
 
 @pytest.fixture
-def combined_stream_message() -> dict:
+def combined_stream_message(binance_message_builder) -> dict:
     """Combined stream message with wrapper."""
-    return {
-        "stream": "btcusdt@depth10",
-        "data": {
-            "lastUpdateId": 160,
-            "bids": [
-                ["42000.50", "1.5"],
-                ["42000.00", "2.0"],
-            ],
-            "asks": [
-                ["42001.00", "0.5"],
-                ["42001.50", "1.0"],
-            ],
-        },
-    }
+    return (
+        binance_message_builder()
+        .with_symbol("BTCUSDT")
+        .with_last_update_id(160)
+        .with_bids([("42000.50", "1.5"), ("42000.00", "2.0")])
+        .with_asks([("42001.00", "0.5"), ("42001.50", "1.0")])
+        .build()
+    )
 
 
 @pytest.fixture
-def combined_stream_message_solusdt() -> dict:
+def combined_stream_message_solusdt(binance_message_builder) -> dict:
     """Combined stream message for SOLUSDT."""
-    return {
-        "stream": "solusdt@depth10",
-        "data": {
-            "lastUpdateId": 500,
-            "bids": [
-                ["150.25", "100"],
-            ],
-            "asks": [
-                ["150.30", "50"],
-            ],
-        },
-    }
+    return (
+        binance_message_builder()
+        .with_symbol("SOLUSDT")
+        .with_last_update_id(500)
+        .with_bids([("150.25", "100")])
+        .with_asks([("150.30", "50")])
+        .build()
+    )
 
 
 @pytest.fixture
-def message_with_empty_bids() -> dict:
+def message_with_empty_bids(binance_message_builder) -> dict:
     """Message with empty bids array."""
-    return {
-        "stream": "btcusdt@depth10",
-        "data": {
-            "lastUpdateId": 161,
-            "bids": [],
-            "asks": [
-                ["42001.00", "0.5"],
-            ],
-        },
-    }
+    return (
+        binance_message_builder()
+        .with_symbol("BTCUSDT")
+        .with_last_update_id(161)
+        .with_bids([])
+        .with_asks([("42001.00", "0.5")])
+        .build()
+    )
 
 
 @pytest.fixture
-def message_with_empty_asks() -> dict:
+def message_with_empty_asks(binance_message_builder) -> dict:
     """Message with empty asks array."""
-    return {
-        "stream": "btcusdt@depth10",
-        "data": {
-            "lastUpdateId": 162,
-            "bids": [
-                ["42000.50", "1.5"],
-            ],
-            "asks": [],
-        },
-    }
+    return (
+        binance_message_builder()
+        .with_symbol("BTCUSDT")
+        .with_last_update_id(162)
+        .with_bids([("42000.50", "1.5")])
+        .with_asks([])
+        .build()
+    )
 
 
 @pytest.fixture
-def high_precision_message() -> dict:
+def high_precision_message(binance_message_builder) -> dict:
     """Message with high precision decimal values."""
-    return {
-        "stream": "dotusdt@depth10",
-        "data": {
-            "lastUpdateId": 300,
-            "bids": [
-                ["7.12345678", "1234.56789012"],
-            ],
-            "asks": [
-                ["7.12345679", "9876.54321098"],
-            ],
-        },
-    }
+    return (
+        binance_message_builder()
+        .with_symbol("DOTUSDT")
+        .with_last_update_id(300)
+        .with_bids([("7.12345678", "1234.56789012")])
+        .with_asks([("7.12345679", "9876.54321098")])
+        .build()
+    )
 
 
 # =============================================================================
@@ -225,17 +203,16 @@ class TestSymbolExtraction:
         ],
     )
     def test_various_stream_name_formats(
-        self, stream_name: str, expected_symbol: str
+        self, binance_message_builder, stream_name: str, expected_symbol: str
     ) -> None:
         """R3: Various stream name formats extract symbol correctly."""
-        message = {
-            "stream": stream_name,
-            "data": {
-                "lastUpdateId": 100,
-                "bids": [["1.0", "1.0"]],
-                "asks": [["1.1", "1.0"]],
-            },
-        }
+        message = (
+            binance_message_builder()
+            .with_stream(stream_name)
+            .with_bids([("1.0", "1.0")])
+            .with_asks([("1.1", "1.0")])
+            .build()
+        )
 
         snapshot = parse_depth_message(message=message)
 
@@ -275,32 +252,30 @@ class TestDecimalConversion:
         assert snapshot.asks[0].price == Decimal("7.12345679")
         assert snapshot.asks[0].qty == Decimal("9876.54321098")
 
-    def test_integer_strings_converted_correctly(self) -> None:
+    def test_integer_strings_converted_correctly(self, binance_message_builder) -> None:
         """R4/R5: Integer string values convert to Decimal correctly."""
-        message = {
-            "stream": "btcusdt@depth10",
-            "data": {
-                "lastUpdateId": 100,
-                "bids": [["42000", "10"]],
-                "asks": [["42001", "5"]],
-            },
-        }
+        message = (
+            binance_message_builder()
+            .with_symbol("BTCUSDT")
+            .with_bids([("42000", "10")])
+            .with_asks([("42001", "5")])
+            .build()
+        )
 
         snapshot = parse_depth_message(message=message)
 
         assert snapshot.bids[0].price == Decimal("42000")
         assert snapshot.bids[0].qty == Decimal("10")
 
-    def test_zero_values_converted_correctly(self) -> None:
+    def test_zero_values_converted_correctly(self, binance_message_builder) -> None:
         """R4/R5: Zero values convert correctly."""
-        message = {
-            "stream": "btcusdt@depth10",
-            "data": {
-                "lastUpdateId": 100,
-                "bids": [["0.0", "0"]],
-                "asks": [["0", "0.0"]],
-            },
-        }
+        message = (
+            binance_message_builder()
+            .with_symbol("BTCUSDT")
+            .with_bids([("0.0", "0")])
+            .with_asks([("0", "0.0")])
+            .build()
+        )
 
         snapshot = parse_depth_message(message=message)
 
@@ -325,16 +300,15 @@ class TestOrderBookLevelCreation:
         assert all(isinstance(level, OrderBookLevel) for level in snapshot.bids)
         assert all(isinstance(level, OrderBookLevel) for level in snapshot.asks)
 
-    def test_level_count_matches_input(self) -> None:
+    def test_level_count_matches_input(self, binance_message_builder) -> None:
         """R6: Number of levels matches input."""
-        message = {
-            "stream": "btcusdt@depth10",
-            "data": {
-                "lastUpdateId": 100,
-                "bids": [["1.0", "1"], ["2.0", "2"], ["3.0", "3"]],
-                "asks": [["4.0", "4"], ["5.0", "5"]],
-            },
-        }
+        message = (
+            binance_message_builder()
+            .with_symbol("BTCUSDT")
+            .with_bids([("1.0", "1"), ("2.0", "2"), ("3.0", "3")])
+            .with_asks([("4.0", "4"), ("5.0", "5")])
+            .build()
+        )
 
         snapshot = parse_depth_message(message=message)
 
@@ -371,16 +345,15 @@ class TestEmptyArrays:
         assert snapshot.asks == ()
         assert len(snapshot.bids) == 1
 
-    def test_handles_both_empty(self) -> None:
+    def test_handles_both_empty(self, binance_message_builder) -> None:
         """R7: Both empty bids and asks handled."""
-        message = {
-            "stream": "btcusdt@depth10",
-            "data": {
-                "lastUpdateId": 100,
-                "bids": [],
-                "asks": [],
-            },
-        }
+        message = (
+            binance_message_builder()
+            .with_symbol("BTCUSDT")
+            .with_bids([])
+            .with_asks([])
+            .build()
+        )
 
         snapshot = parse_depth_message(message=message)
 
@@ -396,44 +369,43 @@ class TestEmptyArrays:
 class TestMalformedJsonStructure:
     """Tests for error handling on malformed JSON."""
 
-    def test_raises_on_malformed_json_structure_missing_bids(self) -> None:
+    def test_raises_on_malformed_json_structure_missing_bids(
+        self, binance_message_builder
+    ) -> None:
         """R8: Missing bids key raises ParseError."""
-        message = {
-            "stream": "btcusdt@depth10",
-            "data": {
-                "lastUpdateId": 100,
-                "asks": [["1.0", "1"]],
-                # missing "bids"
-            },
-        }
+        message = (
+            binance_message_builder()
+            .with_symbol("BTCUSDT")
+            .with_asks([("1.0", "1")])
+            .build_without_bids()
+        )
 
         with pytest.raises(ParseError) as exc_info:
             parse_depth_message(message=message)
 
         assert "bids" in str(exc_info.value).lower()
 
-    def test_raises_on_malformed_json_structure_missing_asks(self) -> None:
+    def test_raises_on_malformed_json_structure_missing_asks(
+        self, binance_message_builder
+    ) -> None:
         """R8: Missing asks key raises ParseError."""
-        message = {
-            "stream": "btcusdt@depth10",
-            "data": {
-                "lastUpdateId": 100,
-                "bids": [["1.0", "1"]],
-                # missing "asks"
-            },
-        }
+        message = (
+            binance_message_builder()
+            .with_symbol("BTCUSDT")
+            .with_bids([("1.0", "1")])
+            .build_without_asks()
+        )
 
         with pytest.raises(ParseError) as exc_info:
             parse_depth_message(message=message)
 
         assert "asks" in str(exc_info.value).lower()
 
-    def test_raises_on_missing_data_in_combined_stream(self) -> None:
+    def test_raises_on_missing_data_in_combined_stream(
+        self, binance_message_builder
+    ) -> None:
         """R8: Missing data key in combined stream raises ParseError."""
-        message = {
-            "stream": "btcusdt@depth10",
-            # missing "data"
-        }
+        message = binance_message_builder().with_symbol("BTCUSDT").build_without_data()
 
         with pytest.raises(ParseError) as exc_info:
             parse_depth_message(message=message)
@@ -448,13 +420,15 @@ class TestMalformedJsonStructure:
         with pytest.raises(ParseError):
             parse_depth_message(message={})
 
-    def test_raises_on_invalid_level_format(self) -> None:
+    def test_raises_on_invalid_level_format(self, binance_message_builder) -> None:
         """R8: Level with wrong number of elements raises ParseError."""
+        # Build a valid message first, then manually modify bids to have invalid format
+        # The builder doesn't support invalid formats by design, so we construct manually
         message = {
             "stream": "btcusdt@depth10",
             "data": {
                 "lastUpdateId": 100,
-                "bids": [["1.0"]],  # Missing quantity
+                "bids": [["1.0"]],  # Missing quantity - intentionally invalid
                 "asks": [["1.0", "1"]],
             },
         }
@@ -469,34 +443,40 @@ class TestMalformedJsonStructure:
 
 
 class TestInvalidPriceValues:
-    """Tests for error handling on invalid price values."""
+    """Tests for error handling on invalid price values.
 
-    def test_raises_on_invalid_price_value_non_numeric(self) -> None:
+    Note: These tests intentionally construct invalid messages manually rather than
+    using BinanceMessageBuilder, since the builder is designed to produce valid data.
+    """
+
+    def test_raises_on_invalid_price_value_non_numeric(
+        self, binance_message_builder
+    ) -> None:
         """R9: Non-numeric price raises ParseError."""
-        message = {
-            "stream": "btcusdt@depth10",
-            "data": {
-                "lastUpdateId": 100,
-                "bids": [["not_a_number", "1.0"]],
-                "asks": [["1.0", "1.0"]],
-            },
-        }
+        # Intentionally invalid - builder cannot produce this
+        message = (
+            binance_message_builder()
+            .with_symbol("BTCUSDT")
+            .with_bids([("not_a_number", "1.0")])
+            .with_asks([("1.0", "1.0")])
+            .build()
+        )
 
         with pytest.raises(ParseError) as exc_info:
             parse_depth_message(message=message)
 
         assert "price" in str(exc_info.value).lower()
 
-    def test_raises_on_negative_price(self) -> None:
+    def test_raises_on_negative_price(self, binance_message_builder) -> None:
         """R9: Negative price raises ParseError."""
-        message = {
-            "stream": "btcusdt@depth10",
-            "data": {
-                "lastUpdateId": 100,
-                "bids": [["-1.0", "1.0"]],
-                "asks": [["1.0", "1.0"]],
-            },
-        }
+        # Intentionally invalid - negative price
+        message = (
+            binance_message_builder()
+            .with_symbol("BTCUSDT")
+            .with_bids([("-1.0", "1.0")])
+            .with_asks([("1.0", "1.0")])
+            .build()
+        )
 
         with pytest.raises(ParseError) as exc_info:
             parse_depth_message(message=message)
@@ -506,16 +486,16 @@ class TestInvalidPriceValues:
             or "negative" in str(exc_info.value).lower()
         )
 
-    def test_raises_on_empty_price_string(self) -> None:
+    def test_raises_on_empty_price_string(self, binance_message_builder) -> None:
         """R9: Empty price string raises ParseError."""
-        message = {
-            "stream": "btcusdt@depth10",
-            "data": {
-                "lastUpdateId": 100,
-                "bids": [["", "1.0"]],
-                "asks": [["1.0", "1.0"]],
-            },
-        }
+        # Intentionally invalid - empty price string
+        message = (
+            binance_message_builder()
+            .with_symbol("BTCUSDT")
+            .with_bids([("", "1.0")])
+            .with_asks([("1.0", "1.0")])
+            .build()
+        )
 
         with pytest.raises(ParseError):
             parse_depth_message(message=message)
@@ -527,18 +507,24 @@ class TestInvalidPriceValues:
 
 
 class TestInvalidQuantityValues:
-    """Tests for error handling on invalid quantity values."""
+    """Tests for error handling on invalid quantity values.
 
-    def test_raises_on_invalid_qty_value_non_numeric(self) -> None:
+    Note: These tests intentionally construct invalid messages using the builder
+    with invalid data to test error handling.
+    """
+
+    def test_raises_on_invalid_qty_value_non_numeric(
+        self, binance_message_builder
+    ) -> None:
         """R10: Non-numeric qty raises ParseError."""
-        message = {
-            "stream": "btcusdt@depth10",
-            "data": {
-                "lastUpdateId": 100,
-                "bids": [["1.0", "invalid"]],
-                "asks": [["1.0", "1.0"]],
-            },
-        }
+        # Intentionally invalid - non-numeric quantity
+        message = (
+            binance_message_builder()
+            .with_symbol("BTCUSDT")
+            .with_bids([("1.0", "invalid")])
+            .with_asks([("1.0", "1.0")])
+            .build()
+        )
 
         with pytest.raises(ParseError) as exc_info:
             parse_depth_message(message=message)
@@ -548,16 +534,16 @@ class TestInvalidQuantityValues:
             or "quantity" in str(exc_info.value).lower()
         )
 
-    def test_raises_on_negative_qty(self) -> None:
+    def test_raises_on_negative_qty(self, binance_message_builder) -> None:
         """R10: Negative qty raises ParseError."""
-        message = {
-            "stream": "btcusdt@depth10",
-            "data": {
-                "lastUpdateId": 100,
-                "bids": [["1.0", "-5.0"]],
-                "asks": [["1.0", "1.0"]],
-            },
-        }
+        # Intentionally invalid - negative quantity
+        message = (
+            binance_message_builder()
+            .with_symbol("BTCUSDT")
+            .with_bids([("1.0", "-5.0")])
+            .with_asks([("1.0", "1.0")])
+            .build()
+        )
 
         with pytest.raises(ParseError) as exc_info:
             parse_depth_message(message=message)
@@ -567,16 +553,16 @@ class TestInvalidQuantityValues:
             or "negative" in str(exc_info.value).lower()
         )
 
-    def test_raises_on_empty_qty_string(self) -> None:
+    def test_raises_on_empty_qty_string(self, binance_message_builder) -> None:
         """R10: Empty qty string raises ParseError."""
-        message = {
-            "stream": "btcusdt@depth10",
-            "data": {
-                "lastUpdateId": 100,
-                "bids": [["1.0", ""]],
-                "asks": [["1.0", "1.0"]],
-            },
-        }
+        # Intentionally invalid - empty quantity string
+        message = (
+            binance_message_builder()
+            .with_symbol("BTCUSDT")
+            .with_bids([("1.0", "")])
+            .with_asks([("1.0", "1.0")])
+            .build()
+        )
 
         with pytest.raises(ParseError):
             parse_depth_message(message=message)
