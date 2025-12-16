@@ -19,6 +19,8 @@ from connector_binance.message_parser import parse_depth_message
 
 logger = get_logger(__name__)
 
+_BINANCE_DEPTH_LEVELS: tuple[int, ...] = (5, 10, 20)
+
 
 class BinanceFeed:
     """Async feed for Binance order book data via WebSocket.
@@ -45,21 +47,11 @@ class BinanceFeed:
         self._backoff = ExponentialBackoff()
 
     def _determine_depth_level(self) -> int:
-        """Determine the appropriate Binance depth level for the configured top_n.
-
-        Binance supports depth levels 5, 10, and 20. This method maps the
-        configured top_n_levels to the smallest sufficient depth level.
-
-        Returns:
-            The Binance depth level (5, 10, or 20).
-        """
-        top_n = self._settings.top_n_levels
-        if top_n <= 5:
-            return 5
-        elif top_n <= 10:
-            return 10
-        else:
-            return 20
+        """Map top_n_levels to smallest sufficient Binance depth level."""
+        for level in _BINANCE_DEPTH_LEVELS:
+            if self._settings.top_n_levels <= level:
+                return level
+        return _BINANCE_DEPTH_LEVELS[-1]
 
     def _build_stream_url(self) -> str:
         """Build the combined stream WebSocket URL.
@@ -78,7 +70,7 @@ class BinanceFeed:
         base_url = self._settings.ws_url.rstrip("/")
         # Change /ws to /stream for combined streams
         if base_url.endswith("/ws"):
-            base_url = base_url[:-3] + "/stream"
+            base_url = base_url.removesuffix("/ws") + "/stream"
 
         stream_path = "/".join(streams)
         return f"{base_url}?streams={stream_path}"
@@ -102,13 +94,13 @@ class BinanceFeed:
                 url = self._build_stream_url()
                 self._ws = await websockets.connect(url)
                 self._backoff.reset()
-                logger.info(f"Connected to Binance WebSocket: {url}")
+                logger.info("Connected to Binance WebSocket: %s", url)
                 return
             except Exception as e:
                 if not self._running:
                     return
                 delay = self._backoff.next_delay()
-                logger.warning(f"Connection failed ({e}), retrying in {delay:.1f}s")
+                logger.warning("Connection failed (%s), retrying in %.1fs", e, delay)
                 await asyncio.sleep(delay)
 
     async def stop(self) -> None:
@@ -121,8 +113,8 @@ class BinanceFeed:
         if self._ws is not None:
             try:
                 await self._ws.close()
-            except Exception:
-                pass  # Ignore errors during close
+            except Exception as e:
+                logger.debug("Ignoring exception during WebSocket close: %s", e)
             self._ws = None
 
     async def snapshots(self) -> AsyncIterator[OrderBookSnapshot]:
@@ -149,13 +141,13 @@ class BinanceFeed:
             except (ConnectionClosed, ConnectionError) as e:
                 if not self._running:
                     return
-                logger.warning(f"Connection lost ({e}), reconnecting...")
+                logger.warning("Connection lost (%s), reconnecting...", e)
                 self._ws = None
                 await self._connect()
             except Exception as e:
                 if not self._running:
                     return
-                logger.error(f"Unexpected error in snapshot loop: {e}")
+                logger.error("Unexpected error in snapshot loop: %s", e)
                 self._ws = None
                 await self._connect()
 
@@ -172,13 +164,13 @@ class BinanceFeed:
         try:
             message: dict[str, Any] = json.loads(message_str)
         except json.JSONDecodeError as e:
-            logger.warning(f"Invalid JSON received: {e}")
+            logger.warning("Invalid JSON received: %s", e)
             return None
 
         try:
             return parse_depth_message(message)
         except ParseError as e:
-            logger.warning(f"Failed to parse depth message: {e}")
+            logger.warning("Failed to parse depth message: %s", e)
             return None
 
     async def __aenter__(self) -> Self:
