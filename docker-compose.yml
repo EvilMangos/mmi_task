@@ -1,0 +1,12 @@
+services:
+  orderbook-watcher:
+    build:
+      context: .
+      dockerfile: apps/orderbook_watcher/Dockerfile
+    container_name: orderbook-watcher
+    restart: unless-stopped
+    env_file:
+      - .env
+    # Optional: expose health port if configured
+    # ports:
+    #   - "${HEALTH_PORT:-8080}:${HEALTH_PORT:-8080}"
