@@ -65,7 +65,22 @@ class Watcher:
         ratio = imbalance_ratio(bid_volume, ask_volume)
 
         # Step 4: Evaluate signal (evaluator manages its own time via injected clock)
+        logger.info(
+            "%s: ratio=%.4f (bid=%.2f, ask=%.2f)",
+            snapshot.symbol,
+            ratio,
+            bid_volume,
+            ask_volume,
+        )
         decision = self._evaluator.evaluate(snapshot.symbol, ratio)
+
+        if not decision.should_alert:
+            logger.debug(
+                "No alert for %s: %s (ratio=%.4f)",
+                snapshot.symbol,
+                decision.reason,
+                ratio,
+            )
 
         # Step 6: Send alert if triggered
         if decision.should_alert:

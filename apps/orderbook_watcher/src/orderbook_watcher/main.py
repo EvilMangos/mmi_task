@@ -34,6 +34,13 @@ async def _async_main() -> None:
         sys.exit(1)
 
     logger.info("Starting orderbook watcher for symbols: %s", settings.binance.symbols)
+    logger.info(
+        "Config: threshold=%.4f, cooldown=%ds, top_n=%d, log_level=%s",
+        settings.alerting.imbalance_threshold,
+        settings.alerting.cooldown_seconds,
+        settings.binance.top_n_levels,
+        settings.logging.log_level,
+    )
 
     # 2. Build EngineConfig from AlertingSettings
     engine_config = EngineConfig(

@@ -90,6 +90,7 @@ class BinanceFeed:
         while self._running:
             try:
                 url = self._build_stream_url()
+                logger.info("Attempting connection to: %s", url)
                 self._ws = await websockets.connect(url)
                 self._backoff.reset()
                 logger.info("Connected to Binance WebSocket: %s", url)
