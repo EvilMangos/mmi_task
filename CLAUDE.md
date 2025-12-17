@@ -131,6 +131,8 @@ crypto-orderbook-alerts/
 │           ├── real_clock.py              # production Clock implementation (UTC)
 │           └── health.py                  # optional /health and /metrics endpoints
 ├── scripts/
+│   ├── create_worktree.sh                 # create git worktree for parallel work
+│   ├── docker_rebuild_and_up.sh           # rebuild and restart docker-compose
 │   ├── lint_and_format.sh                 # run ruff format + ruff check
 │   └── reinstall_packages.sh              # uninstall and reinstall all local packages
 └── packages/
@@ -147,7 +149,7 @@ crypto-orderbook-alerts/
 
 ### Boundary Rules (very important)
 
-* `contracts` defines **shared protocols only** (`Clock`). No implementations, no external dependencies.
+* `contracts` defines **shared protocols only** (`Clock`, `Notifier`, `AlertPayload`) and notifier exceptions. No implementations, no external dependencies.
 * `domain-*` packages are **pure**: no network calls, no environment reads, no time access.
 * `connector-binance` is the only package that knows Binance protocol details.
 * `notifier-telegram` is the only package that knows Telegram API details.
@@ -190,7 +192,6 @@ For each symbol:
 
 Prefer `Protocol`-based interfaces at boundaries:
 
-* `OrderBookFeed` (Binance adapter implements it)
 * `Notifier` (Telegram adapter implements it)
 * `Clock` (injectable time source for deterministic cooldown tests)
 

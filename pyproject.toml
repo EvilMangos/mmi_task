@@ -6,6 +6,7 @@ build-backend = "hatchling.build"
 name = "orderbook-monorepo"
 version = "0.1.0"
 description = "Orderbook monitoring monorepo"
+authors = [{name = "EvilMangos"}]
 requires-python = ">=3.11"
 dependencies = []
 
